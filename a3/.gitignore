@@ -3,5 +3,7 @@ tags
 
 # latex debris
 report/*.pdf
+report/*.aux
+report/*.log
 report/*.synctex.gz
 report/aux
