@@ -1,6 +1,12 @@
 # ctags file
 tags
 
+# object files
+**.o
+
+# executables
+space
+
 # latex debris
 report/*.pdf
 report/*.aux
