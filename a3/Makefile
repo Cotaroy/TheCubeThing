@@ -6,7 +6,7 @@ all: space
 space: space.o
 	gcc ${FLAGS} -o $@ $^
 
-space.o: space.c space.h
+%.o: %.c %.h
 	gcc ${FLAGS} -c $<
 
 tags: *.c *.h
