@@ -1,2 +1,7 @@
 # ctags file
 tags
+
+# latex debris
+report/*.pdf
+report/*.synctex.gz
+report/aux
