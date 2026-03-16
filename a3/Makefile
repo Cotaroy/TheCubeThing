@@ -9,5 +9,8 @@ space: space.o
 space.o: space.c space.h
 	gcc ${FLAGS} -c $<
 
+tags: *.c *.h
+	ctags **.c **.h
+
 clean:
 	rm -f *.o space
