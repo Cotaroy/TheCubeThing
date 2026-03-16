@@ -4,7 +4,7 @@
 
 #define die(e) do { perror(e); exit(EXIT_FAILURE); } while (0);
 
-Triangle *create_triangle(int *v1, int *v2, int *v3) {
+Triangle *create_triangle(double *v1, double *v2, double *v3) {
   // make space for Triangle
   Triangle *new_triangle = malloc(sizeof(Triangle));
   if (new_triangle == NULL) {
@@ -45,7 +45,7 @@ Entity *create_entity(Triangle *object) {
   return new_entity;
 }
 
-Vertex *create_vertex(int *coordinate) {
+Vertex *create_vertex(double *coordinate) {
 
   Vertex *new_vertex = malloc(sizeof(Vertex));
   if (new_vertex == NULL) {
@@ -58,13 +58,13 @@ Vertex *create_vertex(int *coordinate) {
 }
 
 // the centre will always be the origin
-Entity *create_rectangle(Entity *entities, Vertex **vertex_list, int x, int y, int z, int x_length, int y_length, int z_length) {
+Entity *create_rectangle(Entity *entities, Vertex **vertex_list, double x, double y, double z, double x_length, double y_length, double z_length) {
   
-  int *vertices[8];
+  double *vertices[8];
 
   // allocate space for each vertex
   for (int i = 0; i < 8; i++) {
-    vertices[i] = malloc(sizeof(int) * 3);
+    vertices[i] = malloc(sizeof(double) * 3);
     // handle error
     if (vertices[i] == NULL) {
       for (int j = 0; j < i; j++) {
@@ -172,9 +172,9 @@ int main() {
 
     while (curr1 != NULL) {
       printf("[");
-      printf("(%d, %d, %d), ", curr1->vertex0[0], curr1->vertex0[1], curr1->vertex0[2]);
-      printf("(%d, %d, %d), ", curr1->vertex1[0], curr1->vertex1[1], curr1->vertex1[2]);
-      printf("(%d, %d, %d)]\n", curr1->vertex2[0], curr1->vertex2[1], curr1->vertex2[2]);
+      printf("(%f, %f, %f), ", curr1->vertex0[0], curr1->vertex0[1], curr1->vertex0[2]);
+      printf("(%f, %f, %f), ", curr1->vertex1[0], curr1->vertex1[1], curr1->vertex1[2]);
+      printf("(%f, %f, %f)]\n", curr1->vertex2[0], curr1->vertex2[1], curr1->vertex2[2]);
 
       curr1 = curr1->next;
     }
