@@ -18,6 +18,21 @@ Triangle *create_triangle(int *v1, int *v2, int *v3) {
   return new_triangle;
 }
 
+Triangle *create_triangle_v(Vertex *v1, Vertex *v2, Vertex *v3) {
+
+  // make space for Triangle
+  Triangle *new_triangle = malloc(sizeof(Triangle));
+  if (new_triangle == NULL) {
+    die("malloc");
+  }
+  new_triangle->vertex0 = v1->coordinate;
+  new_triangle->vertex1 = v2->coordinate;
+  new_triangle->vertex2 = v3->coordinate;
+  new_triangle->next = NULL;
+
+  return new_triangle;
+}
+
 Entity *create_entity(Triangle *object) {
   // make space for Entity
   Entity *new_entity = malloc(sizeof(Entity));
@@ -30,8 +45,20 @@ Entity *create_entity(Triangle *object) {
   return new_entity;
 }
 
+Vertex *create_vertex(int *coordinate) {
+
+  Vertex *new_vertex = malloc(sizeof(Vertex));
+  if (new_vertex == NULL) {
+    die("malloc");
+  }
+  new_vertex->coordinate = coordinate;
+  new_vertex->next = NULL;
+
+  return new_vertex;
+}
+
 // the centre will always be the origin
-Entity *create_rectangle(Entity *entities, int x, int y, int z, int x_length, int y_length, int z_length) {
+Entity *create_rectangle(Entity *entities, Vertex **vertex_list, int x, int y, int z, int x_length, int y_length, int z_length) {
   
   int *vertices[8];
 
@@ -87,14 +114,56 @@ Entity *create_rectangle(Entity *entities, int x, int y, int z, int x_length, in
   Triangle *trig11 = create_triangle(vertices[0], vertices[4], vertices[6]);
   trig10->next = trig11;
 
+  // add all vertices to vertex list
+  for (int i = 0; i < 8; i++) {
+    Vertex *new_vertex = create_vertex(vertices[i]);
+    new_vertex->next = *vertex_list;
+    *vertex_list = new_vertex;
+  }
+
   Entity *rectangle = create_entity(trig0);
   rectangle->next = entities;
   return rectangle;
 }
 
+void free_all_triangles(Triangle *triangle) {
+  if (triangle == NULL) {
+    return;
+  }
+
+  free_all_triangles(triangle->next);
+  free(triangle);
+}
+
+void free_all_entities(Entity *entities) {
+  
+  if (entities == NULL) {
+    return;
+  }
+
+  free_all_triangles(entities->object);
+
+  free_all_entities(entities->next);
+  free(entities);
+
+} 
+
+void free_all_vertices(Vertex *vertices) {
+  if (vertices == NULL) 
+  {
+    return;
+  }
+
+  free(vertices->coordinate);
+
+  free_all_vertices(vertices->next);
+  free(vertices);
+}
+
 int main() {
 
-  Entity *unit_cube = create_rectangle(NULL, 0, 0, 0, 1, 1, 1);
+  Vertex *vertices = NULL;
+  Entity *unit_cube = create_rectangle(NULL, &vertices, 0, 0, 0, 1, 1, 1);
   
   Entity *curr = unit_cube;
   while (curr != NULL) {
@@ -112,6 +181,9 @@ int main() {
 
     curr = curr->next;
   }
+
+  free_all_entities(unit_cube);
+  free_all_vertices(vertices);
 
   return 0;
 }
