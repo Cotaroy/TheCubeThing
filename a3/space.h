@@ -10,14 +10,24 @@ typedef struct triangle {
 
 typedef struct entity {
   Triangle *object;
-  struct entity *next; // entity list will be NULL terninated
+  struct entity *next; // entity list will be NULL terminated
 } Entity;
 
+// this struct is mainly for freeing vertices (fix double freeing problem if same vertex used twice)
+typedef struct vertex {
+  int *coordinate;
+  struct vertex *next; // vertices will be NULL terminated
+} Vertex;
+
 Triangle *create_triangle(int *v1, int *v2, int *v3);
+Triangle *create_triangle_v(Vertex *v1, Vertex *v2, Vertex *v3);
 Entity *create_entity(Triangle *object);
+Vertex *create_vertex(int *coordinate);
+
 // (x,y,z) is the coordinate of the front left bottom vertex of the rectangle
-Entity *create_rectangle(Entity *entities, int x, int y, int z, int x_length, int y_length, int z_length);
+Entity *create_rectangle(Entity *entities, Vertex **vertex_list, int x, int y, int z, int x_length, int y_length, int z_length);
 void free_all_triangles(Triangle *triangles);
 void free_all_entities(Entity *entities);
+void free_all_vertices(Vertex *vertices);
 
 #endif
