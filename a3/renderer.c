@@ -37,21 +37,21 @@ void render(DistanceMap *map) {
 }
 
 // testinggin
-int main() {
-    DistanceMap *map = malloc(sizeof(DistanceMap));
-    map->width = 8;
-    map->height = 8;
-
-    double *distances = malloc(sizeof(double) * 64);
-    for(int i = 0; i < 64; i++) {
-        distances[i] = 2.0 * i;
-    }
-    map->distances = distances;
-
-    render(map);
-
-    free(map->distances);
-    free(map);
-
-    return 0;
-}
+// int main() {
+//     DistanceMap *map = malloc(sizeof(DistanceMap));
+//     map->width = 8;
+//     map->height = 8;
+//
+//     double *distances = malloc(sizeof(double) * 64);
+//     for(int i = 0; i < 64; i++) {
+//         distances[i] = 2.0 * i;
+//     }
+//     map->distances = distances;
+//
+//     render(map);
+//
+//     free(map->distances);
+//     free(map);
+//
+//     return 0;
+// }

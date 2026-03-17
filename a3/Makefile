@@ -1,12 +1,15 @@
 .PHONY: all clean
 FLAGS = -Wall -g
 
-all: test_space test_raycast
+all: test_space test_raycast test_renderer
 
 test_space: test_space.o space.o
 	gcc ${FLAGS} -o $@ $^
 
 test_raycast: test_raycast.o raycast.o space.o
+	gcc ${FLAGS} -o $@ $^ -lm
+
+test_renderer: test_renderer.o renderer.o raycast.o space.o
 	gcc ${FLAGS} -o $@ $^ -lm
 
 space.o: space.c space.h
@@ -21,11 +24,11 @@ raycast.o: raycast.c raycast.h space.h
 test_raycast.o: test_raycast.c raycast.h space.h
 	gcc ${FLAGS} -c $<
 
+renderer.o: renderer.c renderer.h
+	gcc ${FLAGS} -c $<
+
 tags: *.c *.h
 	ctags **.c **.h
 
-renderer: renderer.c
-	gcc ${FLAGS} -o $@ $<
-
 clean:
-	rm -f *.o test_space test_raycast
+	rm -f *.o test_space test_raycast test_renderer
