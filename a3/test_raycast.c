@@ -6,19 +6,33 @@
 int main() {
 
   Vertex *vertices = NULL;
-  Entity *cube = create_rectangle(NULL, &vertices, 5, -1.5, -1.5, 3, 3, 3);
-
   double pos[3] = {0, 0, 0};
+
+  // test single ray
+  Entity *cube = create_rectangle(NULL, &vertices, 5, -1.5, -1.5, 3, 3, 3);
   double distance = shoot_ray(pos, 0, PI/2, cube);
 
   printf("Expected: 5.000000\n");
   printf("Actual: %f\n", distance);
 
+  // test same ray but put a cube in front
   create_rectangle(&cube, &vertices, 3, 0, 0, 1, 1, 1);
  
   distance = shoot_ray(pos, 0, PI/2, cube);
 
   printf("Expected: 3.000000\n");
+  printf("Actual: %f\n", distance);
+  
+  // test shoot ray straight up
+  distance = shoot_ray(pos, 0, 0, cube);
+  
+  printf("Expected: inf\n");
+  printf("Actual: %f\n", distance);
+
+  // test shoot ray backwards
+  distance = shoot_ray(pos, PI, PI/2, cube);
+  
+  printf("Expected: inf\n");
   printf("Actual: %f\n", distance);
 
   free_all_entities(cube);
