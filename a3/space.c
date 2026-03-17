@@ -58,7 +58,7 @@ Vertex *create_vertex(double *coordinate) {
 }
 
 // the centre will always be the origin
-Entity *create_rectangle(Entity *entities, Vertex **vertex_list, double x, double y, double z, double x_length, double y_length, double z_length) {
+Entity *create_rectangle(Entity **entities, Vertex **vertex_list, double x, double y, double z, double x_length, double y_length, double z_length) {
   
   double *vertices[8];
 
@@ -122,7 +122,10 @@ Entity *create_rectangle(Entity *entities, Vertex **vertex_list, double x, doubl
   }
 
   Entity *rectangle = create_entity(trig0);
-  rectangle->next = entities;
+  if (entities != NULL) {
+    rectangle->next = *entities;
+    *entities = rectangle;
+  }
   return rectangle;
 }
 
