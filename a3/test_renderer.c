@@ -16,12 +16,15 @@ int main() {
     map->distances = malloc(sizeof(double) * 128 * 128);
     double pos[3] = {0, 0, 0};
     double fov = PI / 2;
+    int count = 0;
     for(int y = -64; y < 63; y++) {
         for(int x = -64; x < 63; x++) {
             int idx = (y + 64) * 128 + (x + 64);
             double pitch = (fov/128) * y;
             double yaw = (fov/128) * x;
             double distance = shoot_ray(pos, pitch, yaw, cube);
+            printf("%d: %f\n", count, distance);
+            count++;
         }
     }
 

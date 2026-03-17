@@ -27,6 +27,10 @@ test_raycast.o: test_raycast.c raycast.h space.h
 renderer.o: renderer.c renderer.h
 	gcc ${FLAGS} -c $<
 
+
+test_renderer.o: test_renderer.c renderer.h raycast.h space.h
+	gcc ${FLAGS} -c $<
+
 tags: *.c *.h
 	ctags **.c **.h
 
