@@ -7,6 +7,7 @@ tags
 # executables
 test_space
 test_raycast
+test_renderer
 
 # latex debris
 report/*.pdf
