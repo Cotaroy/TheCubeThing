@@ -5,7 +5,8 @@ tags
 **.o
 
 # executables
-space
+test_space
+test_raycast
 
 # latex debris
 report/*.pdf
