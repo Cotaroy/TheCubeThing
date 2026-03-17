@@ -4,7 +4,9 @@ typedef struct {
     double* distances; // array of length width*height, stored in LTR,TTB reading direction
 } DistanceMap;
 
-typedef struct {
-    void (*render)(DistanceMap map);
-} Renderer;
+// typedef struct {
+//     void (*render)(DistanceMap map);
+// } Renderer;
+
+void render(DistanceMap *map);
 
