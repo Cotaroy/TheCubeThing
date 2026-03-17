@@ -24,5 +24,8 @@ test_raycast.o: test_raycast.c raycast.h space.h
 tags: *.c *.h
 	ctags **.c **.h
 
+renderer: renderer.c
+	gcc ${FLAGS} -o $@ $<
+
 clean:
 	rm -f *.o test_space test_raycast
