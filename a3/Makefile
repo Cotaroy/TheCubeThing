@@ -14,9 +14,12 @@ space.o: space.c space.h
 
 raycast.o: raycast.c raycast.h space.h
 	gcc ${FLAGS} -c $<
-	
+
 tags: *.c *.h
 	ctags **.c **.h
+
+renderer: renderer.c
+	gcc ${FLAGS} -o $@ $<
 
 clean:
 	rm -f *.o space raycast
