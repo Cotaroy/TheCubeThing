@@ -9,7 +9,7 @@ int main() {
   Entity *cube = create_rectangle(NULL, &vertices, 5, -1.5, -1.5, 3, 3, 3);
 
   double pos[3] = {0, 0, 0};
-  double distance = shoot_ray(pos, 0, PI, cube);
+  double distance = shoot_ray(pos, 0, PI/2, cube);
 
   printf("%f\n", distance);
 

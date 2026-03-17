@@ -151,7 +151,7 @@ double shoot_ray(double *pos, double pitch, double yaw, Entity *entities) {
         }
 
         // child process
-        else if (res == 0) {
+        else if (res2 == 0) {
 
           double distance = get_distance(pos, pitch, yaw, curr_tri);
 
@@ -223,6 +223,7 @@ double shoot_ray(double *pos, double pitch, double yaw, Entity *entities) {
     if (read_res == -1) {
       die("read");
     }
+    
     min_distance = fmin(min_distance, distance);
   } while (read_res > 0);
 
