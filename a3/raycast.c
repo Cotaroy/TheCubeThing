@@ -31,9 +31,9 @@ void normalize(double *result, double *vector) {
 double get_distance(double *pos, double pitch, double yaw, Triangle *triangle) {
 
   double ray_vec[3];
-  ray_vec[0] = cos(pitch) * sin(yaw);
-  ray_vec[1] = sin(pitch) * sin(yaw);
-  ray_vec[2] = cos(yaw);
+  ray_vec[0] = cos(yaw) * sin(pitch);
+  ray_vec[1] = sin(yaw) * sin(pitch);
+  ray_vec[2] = cos(pitch);
 
   // 2 vectors to define plane
   double p_vector1[3];

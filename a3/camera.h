@@ -10,4 +10,10 @@ typedef struct {
     double ray_inclination;
 } CameraRaycastTask;
 
+typedef struct {
+    int image_x;
+    int image_y;
+    double distance;
+} CameraRaycastTaskResult;
+
 

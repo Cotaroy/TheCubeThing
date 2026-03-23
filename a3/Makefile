@@ -32,8 +32,8 @@ test_renderer.o: test_renderer.c renderer.h raycast.h space.h
 	gcc ${FLAGS} -c $<
 
 # temporary
-camera: camera.c raycast.c space.c camera.h raycast.h space.h renderer.h
-	gcc -Wall -g -o camera camera.c raycast.c space.c -lm
+camera: camera.c raycast.c space.c renderer.c camera.h raycast.h space.h renderer.h
+	gcc -Wall -g -o camera camera.c raycast.c space.c renderer.c -lm
 
 tags: *.c *.h
 	ctags **.c **.h

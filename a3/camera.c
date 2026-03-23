@@ -17,7 +17,12 @@ void camera_worker_work(
         int fd_read,
         int fd_write,
         Entity *collidable_entities) {
+
+    // overwritten repeatedly to store the current task & result
     CameraRaycastTask task;
+    CameraRaycastTaskResult *result = malloc(sizeof(CameraRaycastTaskResult));
+
+
     int tasks_completed = 0;
     while(read(fd_read, &task, sizeof(CameraRaycastTask)) > 0) {
         printf("worker %d actually received its %dth task\n", worker_idx, tasks_completed + 1);
@@ -30,7 +35,16 @@ void camera_worker_work(
                 task.ray_azimuth,
                 task.ray_inclination,
                 collidable_entities);
-        printf("[%d] Distance: %lf\n", worker_idx, distance);
+
+        // printf("[%d] Distance: %lf\n", worker_idx, distance);
+        result->image_x = task.image_x;
+        result->image_y = task.image_y;
+        result->distance = distance;
+        if(write(fd_write, result, sizeof(*result) <= 0)) {
+            perror("child write");
+            exit(1);
+        }
+
         tasks_completed++;
     }
     printf("Worker %d exiting after completing %d tasks.\n", worker_idx, tasks_completed);
@@ -175,28 +189,54 @@ void capture_image(
 
     int tasks_assigned = 0;
     int tasks_completed = 0;
+    CameraRaycastTaskResult *task_result =
+        malloc(sizeof(CameraRaycastTaskResult)); // repeatedly overwritten
 
-    fd_set select_fds;
-    int max_fd = -1;
-    FD_ZERO(&select_fds);
+    fd_set select_read_fds;
+    int max_read_fd = -1;
+    FD_ZERO(&select_read_fds);
+
+    fd_set select_write_fds;
+    int max_write_fd = -1;
+    FD_ZERO(&select_write_fds);
 
     while(tasks_completed < num_tasks) {
-        // since select_fds gets modified by select,
+        // since select_*_fds gets modified by select,
         // we need to do this on every loop iteration
         for (int i = 0; i < num_workers; i++) {
-            FD_SET(write_fds[i], &select_fds);
-            if(write_fds[i] >= max_fd) {
-                max_fd = write_fds[i] + 1;
+            FD_SET(read_fds[i], &select_read_fds);
+            if(read_fds[i] >= max_read_fd) {
+                max_read_fd = read_fds[i] + 1;
+            }
+            FD_SET(write_fds[i], &select_write_fds);
+            if(write_fds[i] >= max_write_fd) {
+                max_write_fd = write_fds[i] + 1;
             }
         }
 
-        if(select(max_fd, NULL, &select_fds, NULL, NULL) == -1) {
+        if(select(max_write_fd,
+                    &select_read_fds,
+                    &select_write_fds, NULL, NULL) == -1) {
             perror("select");
             exit(1);
         }
 
         for (int i = 0; i < num_workers; i++) {
-            if(FD_ISSET(write_fds[i], &select_fds) != 0) {
+            if(FD_ISSET(read_fds[i], &select_read_fds) != 0) {
+                // this one has something to read from
+                if(read(read_fds[i], task_result,
+                            sizeof(CameraRaycastTaskResult)) <= 0) {
+                    perror("read");
+                    exit(1);
+                }
+
+                int film_idx =
+                    (film->width * task_result->image_y)
+                    + task_result->image_x;
+                film->distances[film_idx] = task_result->distance;
+            }
+
+            if(FD_ISSET(write_fds[i], &select_write_fds) != 0) {
                 // this one is available for writing to
 
                 if(task_list_head >= num_tasks) {
@@ -214,10 +254,6 @@ void capture_image(
                 tasks_assigned++;
             }
         }
-        // if(available_write_fd == -1) {
-        //     perror("select returned but no pipes were available to write??");
-        //     exit(1);
-        // }
 
         if(task_list_head >= num_tasks) {
             break;
@@ -251,6 +287,8 @@ int main() {
     map->distances = malloc(sizeof(double) * 128 * 128);
 
     capture_image(cube, map, 0,0,0,0,0,0,0);
+    render(map);
+
     return 0;
 }
 
