@@ -28,12 +28,12 @@ void normalize(double *result, double *vector) {
 
 // helper for shoot ray, returns distance from triangle
 // return INFINITY if no intersection
-double get_distance(double *pos, double pitch, double yaw, Triangle *triangle) {
+double get_distance(double *pos, double azimuth, double inclination, Triangle *triangle) {
 
   double ray_vec[3];
-  ray_vec[0] = cos(yaw) * sin(pitch);
-  ray_vec[1] = sin(yaw) * sin(pitch);
-  ray_vec[2] = cos(pitch);
+  ray_vec[0] = cos(azimuth) * sin(inclination);
+  ray_vec[1] = sin(azimuth) * sin(inclination);
+  ray_vec[2] = cos(inclination);
 
   // 2 vectors to define plane
   double p_vector1[3];
@@ -104,7 +104,7 @@ double get_distance(double *pos, double pitch, double yaw, Triangle *triangle) {
 
 // Shoot a single ray in the pitch-yaw direction from pos, returns distance
 // if exit status is 0, then process terminated normally
-double shoot_ray(double *pos, double pitch, double yaw, Entity *entities) {
+double shoot_ray(double *pos, double azimuth, double inclination, Entity *entities) {
   Entity *curr_entity = entities;
   Triangle *curr_triangle = entities->object;
   
@@ -112,7 +112,7 @@ double shoot_ray(double *pos, double pitch, double yaw, Entity *entities) {
 
   while (curr_entity != NULL) {
     while (curr_triangle != NULL) {
-      double distance = get_distance(pos, pitch, yaw, curr_triangle);
+      double distance = get_distance(pos, azimuth, inclination, curr_triangle);
 
       min_distance = fmin(min_distance, distance);
 
