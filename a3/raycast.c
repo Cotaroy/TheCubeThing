@@ -62,7 +62,7 @@ double get_distance(double *pos, double azimuth, double inclination, Triangle *t
   double distance = -1 * (dot_product(plane_normal, pos) + plane_offset) / (dot_product(plane_normal, ray_vec));
 
   // if intersection is behind the source
-  if (distance < 0) {
+  if (distance < ORTHOGONAL_TOLERANCE) {
     return INFINITY;
   }
 
@@ -95,7 +95,7 @@ double get_distance(double *pos, double azimuth, double inclination, Triangle *t
   normalize(unit_normal, plane_normal);
 
   // actual logic for checking
-  if (dot_product(cross1, unit_normal) >= 0 && dot_product(cross2, unit_normal) >= 0 && dot_product(cross3, unit_normal) >= 0) {
+  if (dot_product(cross1, unit_normal) >= -ORTHOGONAL_TOLERANCE && dot_product(cross2, unit_normal) >= -ORTHOGONAL_TOLERANCE && dot_product(cross3, unit_normal) >= -ORTHOGONAL_TOLERANCE) {
     return distance;
   }
   return INFINITY;
