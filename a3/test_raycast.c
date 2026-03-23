@@ -35,6 +35,19 @@ int main() {
   printf("Expected: inf\n");
   printf("Actual: %f\n", distance);
 
+
+  Entity *cube2 = create_rectangle(NULL, &vertices, 1, 1, 1, 1, 1, 1);
+  distance = shoot_ray(pos, PI/4, PI/4, cube2);
+
+  printf("Expected: 2\n");
+  printf("Actual: %f\n", distance);
+
+  distance = shoot_ray(pos, PI/4, 0.9553166, cube2);
+
+  printf("Expected: 1.73\n");
+  printf("Actual: %f\n", distance);
+
+  free_all_entities(cube2);
   free_all_entities(cube);
   free_all_vertices(vertices);
 }
