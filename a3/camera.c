@@ -25,12 +25,14 @@ void camera_worker_work(
 
     int tasks_completed = 0;
     while(read(fd_read, &task, sizeof(CameraRaycastTask)) > 0) {
-        printf("worker %d actually received its %dth task\n", worker_idx, tasks_completed + 1);
+        // printf("worker %d actually received its %dth task\n", worker_idx, tasks_completed + 1);
         double pos[3] = {
             task.ray_origin_x,
             task.ray_origin_y,
             task.ray_origin_z
         };
+        // printf("parameters to shoot_ray: pos=(%lf,%lf,%lf),azim=%lf,incl=%lf",
+        //         pos[0], pos[1], pos[2], task.ray_azimuth, task.ray_inclination);
         double distance = shoot_ray(pos,
                 task.ray_azimuth,
                 task.ray_inclination,
@@ -158,6 +160,11 @@ void capture_image(
     double d_azim = a_azim / film->width;
     double d_incl = a_incl / film->height;
 
+    // printf("pxAR=%lf, a_azim=%lf; a_incl=%lf, d_azim=%lf; d_incl=%lf",
+    //         pixel_aspect_ratio,
+    //         a_azim, a_incl,
+    //         d_azim, d_incl);
+
     // create all the tasks
     double azim = camera_azimuth + (a_azim / 2); // counterclockwise from camera
     double incl = camera_inclination - (a_incl / 2); // up from camera
@@ -178,6 +185,15 @@ void capture_image(
             task->ray_azimuth = azim;
             task->ray_inclination = incl;
             task_list[task_list_tail] = task;
+
+
+            // printf("task: origin=(%lf,%lf,%lf),azim=%lf,incl=%lf\n",
+            //         camera_x,
+            //         camera_y,
+            //         camera_z,
+            //         azim,
+            //         incl
+            //       );
 
             task_list_tail++;
         }
@@ -235,7 +251,7 @@ void capture_image(
                     (film->width * task_result->image_y)
                     + task_result->image_x;
                 film->distances[film_idx] = task_result->distance;
-                printf("(%d, %d) Distance: %lf\n", task_result->image_x, task_result->image_y, task_result->distance);
+                // printf("(%d, %d) Distance: %lf\n", task_result->image_x, task_result->image_y, task_result->distance);
                 tasks_completed++;
             }
 
@@ -286,11 +302,11 @@ int main() {
 
 
     DistanceMap *map = malloc(sizeof(DistanceMap));
-    map->width = 128;
-    map->height = 128;
-    map->distances = malloc(sizeof(double) * 128 * 128);
+    map->width = 32;
+    map->height = 32;
+    map->distances = malloc(sizeof(double) * 32 * 32);
 
-    capture_image(cube, map, 0,0,0,0,0,0,0);
+    capture_image(cube, map, PI/4, 1, 0, 0, 0, 0, PI/16);
     render(map);
 
     return 0;

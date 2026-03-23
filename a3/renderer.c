@@ -20,6 +20,22 @@ char get_pixel_char(double distance) {
     return hierarchy[tier];
 }
 
+// void render(DistanceMap *map) {
+//     int width = map->width;
+//     int height = map->height;
+//     double *distances = map->distances;
+//
+//     for(int y = 0; y < height; y++) {
+//         for(int x = 0; x < width; x++) {
+//             int idx = y * width + x;
+//             double dist = distances[idx];
+//
+//             printf("%c", get_pixel_char(dist));
+//         }
+//         printf("\n");
+//     }
+// }
+
 void render(DistanceMap *map) {
     int width = map->width;
     int height = map->height;
@@ -30,28 +46,8 @@ void render(DistanceMap *map) {
             int idx = y * width + x;
             double dist = distances[idx];
 
-            printf("%c", get_pixel_char(dist));
+            printf("%.1lf ", dist);
         }
         printf("\n");
     }
 }
-
-// testinggin
-// int main() {
-//     DistanceMap *map = malloc(sizeof(DistanceMap));
-//     map->width = 8;
-//     map->height = 8;
-//
-//     double *distances = malloc(sizeof(double) * 64);
-//     for(int i = 0; i < 64; i++) {
-//         distances[i] = 2.0 * i;
-//     }
-//     map->distances = distances;
-//
-//     render(map);
-//
-//     free(map->distances);
-//     free(map);
-//
-//     return 0;
-// }
