@@ -1,7 +1,7 @@
 .PHONY: all clean
 FLAGS = -Wall -g
 
-all: test_space test_raycast test_renderer
+all: test_space test_raycast test_renderer camera
 
 test_space: test_space.o space.o
 	gcc ${FLAGS} -o $@ $^

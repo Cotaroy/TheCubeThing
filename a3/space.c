@@ -86,32 +86,32 @@ Entity *create_rectangle(Entity **entities, Vertex **vertex_list, double x, doub
 
   // hard code each triangle FAHHHH
   Triangle *trig0 = create_triangle(vertices[0], vertices[1], vertices[5]);
-  Triangle *trig1 = create_triangle(vertices[0], vertices[4], vertices[5]);
+  Triangle *trig1 = create_triangle(vertices[0], vertices[5], vertices[4]);
   trig0->next = trig1;
 
   Triangle *trig2 = create_triangle(vertices[4], vertices[5], vertices[7]);
   trig1->next = trig2;
-  Triangle *trig3 = create_triangle(vertices[4], vertices[6], vertices[7]);
+  Triangle *trig3 = create_triangle(vertices[4], vertices[7], vertices[6]);
   trig2->next = trig3;
 
-  Triangle *trig4 = create_triangle(vertices[2], vertices[3], vertices[7]);
+  Triangle *trig4 = create_triangle(vertices[6], vertices[7], vertices[3]);
   trig3->next = trig4;
-  Triangle *trig5 = create_triangle(vertices[2], vertices[6], vertices[7]);
+  Triangle *trig5 = create_triangle(vertices[6], vertices[3], vertices[2]);
   trig4->next = trig5;
   
-  Triangle *trig6 = create_triangle(vertices[0], vertices[1], vertices[3]);
+  Triangle *trig6 = create_triangle(vertices[2], vertices[3], vertices[1]);
   trig5->next = trig6;
-  Triangle *trig7 = create_triangle(vertices[0], vertices[2], vertices[3]);
+  Triangle *trig7 = create_triangle(vertices[2], vertices[1], vertices[0]);
   trig6->next = trig7;
 
   Triangle *trig8 = create_triangle(vertices[1], vertices[3], vertices[7]);
   trig7->next = trig8;
-  Triangle *trig9 = create_triangle(vertices[1], vertices[5], vertices[7]);
+  Triangle *trig9 = create_triangle(vertices[1], vertices[7], vertices[5]);
   trig8->next = trig9;
 
-  Triangle *trig10 = create_triangle(vertices[0], vertices[2], vertices[6]);
+  Triangle *trig10 = create_triangle(vertices[2], vertices[0], vertices[4]);
   trig9->next = trig10;
-  Triangle *trig11 = create_triangle(vertices[0], vertices[4], vertices[6]);
+  Triangle *trig11 = create_triangle(vertices[2], vertices[4], vertices[6]);
   trig10->next = trig11;
 
   // add all vertices to vertex list
