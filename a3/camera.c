@@ -160,14 +160,19 @@ void capture_image(
     double d_azim = a_azim / film->width;
     double d_incl = a_incl / film->height;
 
-    // printf("pxAR=%lf, a_azim=%lf; a_incl=%lf, d_azim=%lf; d_incl=%lf",
-    //         pixel_aspect_ratio,
-    //         a_azim, a_incl,
-    //         d_azim, d_incl);
 
     // create all the tasks
     double azim = camera_azimuth + (a_azim / 2); // counterclockwise from camera
     double incl = camera_inclination - (a_incl / 2); // up from camera
+
+    printf("======================================\n");
+    printf("Top left ray has θ=%lf, φ=%lf.\n", azim, incl);
+    printf("pxAR=%lf, a_azim=%lf, a_incl=%lf, d_azim=%lf, d_incl=%lf.\n",
+            pixel_aspect_ratio,
+            a_azim, a_incl,
+            d_azim, d_incl);
+    printf("======================================\n");
+
     for(int y = 0; y < film->height; y++, incl += d_incl) {
         // start from the top row, move down
         for(int x = 0; x < film->width; x++, azim -= d_azim) {
@@ -268,7 +273,7 @@ void capture_image(
                     perror("write");
                     exit(1);
                 }
-                printf("sent task to worker at index %d\n", i);
+                // printf("sent task to worker at index %d\n", i);
                 task_list_head++;
                 tasks_assigned++;
             }
