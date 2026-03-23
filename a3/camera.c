@@ -1,5 +1,7 @@
 #include <stdlib.h>
 #include <stdio.h>
+#include <sys/select.h>
+#include <sys/time.h>
 #include <unistd.h>
 #include "camera.h"
 #include "raycast.h"
@@ -7,14 +9,18 @@
 #include "space.h"
 #define PI (3.14159265358979323846)
 
+#define NUM_WORKERS 8
 
-void camera_worker_work(int fd_read, int fd_write, Entity *collidable_entities) {
+
+void camera_worker_work(
+        int worker_idx,
+        int fd_read,
+        int fd_write,
+        Entity *collidable_entities) {
     CameraRaycastTask task;
-    while(1) {
-        if(read(fd_read, &task, sizeof(CameraRaycastTask)) <= 0) {
-            printf("fodsugjl");
-            exit(0);
-        }
+    int tasks_completed = 0;
+    while(read(fd_read, &task, sizeof(CameraRaycastTask)) > 0) {
+        printf("worker %d actually received its %dth task\n", worker_idx, tasks_completed + 1);
         double pos[3] = {
             task.ray_origin_x,
             task.ray_origin_y,
@@ -24,8 +30,11 @@ void camera_worker_work(int fd_read, int fd_write, Entity *collidable_entities) 
                 task.ray_azimuth,
                 task.ray_inclination,
                 collidable_entities);
-        printf("%lf", distance);
+        printf("[%d] Distance: %lf\n", worker_idx, distance);
+        tasks_completed++;
     }
+    printf("Worker %d exiting after completing %d tasks.\n", worker_idx, tasks_completed);
+    exit(0);
 }
 
 
@@ -53,10 +62,13 @@ void camera_spawn_workers(
 
             close(parent_to_child_pipe[1]);
             close(child_to_parent_pipe[0]);
-            camera_worker_work(parent_to_child_pipe[0],
+            camera_worker_work(i, parent_to_child_pipe[0],
                                child_to_parent_pipe[1],
                                collidable_entities);
             // Should exit from inside this function (never return)
+            // but just in case
+            fprintf(stderr, "child escaped work");
+            exit(1);
         }
 
         close(child_to_parent_pipe[1]);
@@ -108,7 +120,7 @@ void capture_image(
         exit(1);
     }
 
-    int num_workers = 256;
+    int num_workers = NUM_WORKERS;
     pid_t pids[num_workers];
     int read_fds[num_workers];
     int write_fds[num_workers];
@@ -157,25 +169,67 @@ void capture_image(
         }
     }
 
+    // timing
+    struct timeval start, stop;
+    gettimeofday(&start, NULL);
+
     int tasks_assigned = 0;
     int tasks_completed = 0;
-    // assign initial wave of tasks
-    for(int i = 0; i < num_workers; i++) {
-        if(write(write_fds[i],
-                    task_list[task_list_head],
-                    sizeof(*task_list[task_list_head])) < 0) {
-            perror("write");
+
+    fd_set select_fds;
+    int max_fd = -1;
+    FD_ZERO(&select_fds);
+
+    while(tasks_completed < num_tasks) {
+        // since select_fds gets modified by select,
+        // we need to do this on every loop iteration
+        for (int i = 0; i < num_workers; i++) {
+            FD_SET(write_fds[i], &select_fds);
+            if(write_fds[i] >= max_fd) {
+                max_fd = write_fds[i] + 1;
+            }
+        }
+
+        if(select(max_fd, NULL, &select_fds, NULL, NULL) == -1) {
+            perror("select");
             exit(1);
         }
-        task_list_head++;
-        tasks_assigned++;
-    }
-    while(tasks_completed < num_tasks) {
-        break; // TODO
+
+        for (int i = 0; i < num_workers; i++) {
+            if(FD_ISSET(write_fds[i], &select_fds) != 0) {
+                // this one is available for writing to
+
+                if(task_list_head >= num_tasks) {
+                    break;
+                }
+
+                if(write(write_fds[i],
+                            task_list[task_list_head],
+                            sizeof(*task_list[task_list_head])) < 0) {
+                    perror("write");
+                    exit(1);
+                }
+                printf("sent task to worker at index %d\n", i);
+                task_list_head++;
+                tasks_assigned++;
+            }
+        }
+        // if(available_write_fd == -1) {
+        //     perror("select returned but no pipes were available to write??");
+        //     exit(1);
+        // }
+
+        if(task_list_head >= num_tasks) {
+            break;
+        }
     }
 
+    // end time
+    gettimeofday(&stop, NULL);
+    printf("took %lu microseconds\n", (stop.tv_sec - start.tv_sec) * 1000000 + stop.tv_usec - start.tv_usec);
+
     for(int i = 0; i < num_tasks; i++) {
-        printf("[] %d\n", i);
+        // printf("[] %d\n", i);
         free(task_list[i]);
     }
 }
@@ -184,7 +238,12 @@ void capture_image(
 
 int main() {
     Vertex *vertices = NULL;
-    Entity *cube = create_rectangle(NULL, &vertices, 5, -1.5, -1.5, 3, 3, 3);
+    Entity *cube = create_rectangle(NULL, &vertices, 0, 8, 0, 3, 3, 3);
+    create_rectangle(&cube, &vertices, 0, 8, 0, 3, 3, 3);
+    create_rectangle(&cube, &vertices, 0, 8, 0, 3, 3, 3);
+    create_rectangle(&cube, &vertices, 0, 8, 0, 3, 3, 3);
+    create_rectangle(&cube, &vertices, 0, 8, 0, 3, 3, 3);
+
 
     DistanceMap *map = malloc(sizeof(DistanceMap));
     map->width = 128;
