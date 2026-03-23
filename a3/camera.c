@@ -40,7 +40,7 @@ void camera_worker_work(
         result->image_x = task.image_x;
         result->image_y = task.image_y;
         result->distance = distance;
-        if(write(fd_write, result, sizeof(*result) <= 0)) {
+        if(write(fd_write, result, sizeof(*result)) <= 0) {
             perror("child write");
             exit(1);
         }
@@ -192,13 +192,14 @@ void capture_image(
     CameraRaycastTaskResult *task_result =
         malloc(sizeof(CameraRaycastTaskResult)); // repeatedly overwritten
 
-    fd_set select_read_fds;
-    int max_read_fd = -1;
-    FD_ZERO(&select_read_fds);
 
+    int max_read_fd, max_write_fd;
+    fd_set select_read_fds;
     fd_set select_write_fds;
-    int max_write_fd = -1;
+    FD_ZERO(&select_read_fds);
     FD_ZERO(&select_write_fds);
+    max_read_fd = -1;
+    max_write_fd = -1;
 
     while(tasks_completed < num_tasks) {
         // since select_*_fds gets modified by select,
@@ -234,6 +235,8 @@ void capture_image(
                     (film->width * task_result->image_y)
                     + task_result->image_x;
                 film->distances[film_idx] = task_result->distance;
+                printf("(%d, %d) Distance: %lf\n", task_result->image_x, task_result->image_y, task_result->distance);
+                tasks_completed++;
             }
 
             if(FD_ISSET(write_fds[i], &select_write_fds) != 0) {
@@ -274,11 +277,12 @@ void capture_image(
 
 int main() {
     Vertex *vertices = NULL;
-    Entity *cube = create_rectangle(NULL, &vertices, 0, 8, 0, 3, 3, 3);
-    create_rectangle(&cube, &vertices, 0, 8, 0, 3, 3, 3);
-    create_rectangle(&cube, &vertices, 0, 8, 0, 3, 3, 3);
-    create_rectangle(&cube, &vertices, 0, 8, 0, 3, 3, 3);
-    create_rectangle(&cube, &vertices, 0, 8, 0, 3, 3, 3);
+    Entity *cube =
+        create_rectangle(NULL, &vertices, -1, -1, 8, 3, 3, 3);
+    create_rectangle(&cube, &vertices, -1, -1, 8, 3, 3, 3);
+    create_rectangle(&cube, &vertices, -1, -1, 8, 3, 3, 3);
+    create_rectangle(&cube, &vertices, -1, -1, 8, 3, 3, 3);
+    create_rectangle(&cube, &vertices, -1, -1, 8, 3, 3, 3);
 
 
     DistanceMap *map = malloc(sizeof(DistanceMap));
