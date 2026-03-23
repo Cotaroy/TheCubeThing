@@ -8,8 +8,8 @@ double dot_product(double *v1, double *v2); // expects array of length 3
 void normalize(double *result, double *vector);
 
 // return INFINITY if there is no intersection or if intersection is behind the source
-double get_distance(double *pos, double pitch, double yaw, Triangle *triangle);
+double get_distance(double *pos, double azimuth, double inclination, Triangle *triangle);
 // return INFINITY if there is no intersection or if intersection is behind the source
-double shoot_ray(double *pos, double pitch, double yaw, Entity *entities);
+double shoot_ray(double *pos, double azimuth, double inclination, Entity *entities);
 
 #endif
