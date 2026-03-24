@@ -50,6 +50,8 @@ double get_distance(double *pos, double x_vector, double y_vector, double z_vect
   // get cross product
   double plane_normal[3];
   cross_product(plane_normal, p_vector1, p_vector2);
+  double unit_normal[3];
+  normalize(unit_normal, plane_normal);
 
   // check if ray_vec orthogonal to normal
   if (fabs(dot_product(ray_vec, plane_normal)) < ORTHOGONAL_TOLERANCE) {
@@ -57,12 +59,12 @@ double get_distance(double *pos, double x_vector, double y_vector, double z_vect
   }
 
   // find intersection with plane
-  double plane_offset = -1 * dot_product(plane_normal, triangle->vertex0);
+  double plane_offset = -1 * dot_product(unit_normal, triangle->vertex0);
 
-  double distance = -1 * (dot_product(plane_normal, pos) + plane_offset) / (dot_product(plane_normal, ray_vec));
+  double distance = -1 * (dot_product(unit_normal, pos) + plane_offset) / (dot_product(unit_normal, ray_vec));
 
   // if intersection is behind the source
-  if (distance < ORTHOGONAL_TOLERANCE) {
+  if (distance < 0) {
     return INFINITY;
   }
 
@@ -91,8 +93,6 @@ double get_distance(double *pos, double x_vector, double y_vector, double z_vect
   cross_product(cross2, p_vector2, intersect_minus2);
   cross_product(cross3, p_vector3, intersect_minus3);
 
-  double unit_normal[3];
-  normalize(unit_normal, plane_normal);
 
   // actual logic for checking
   if (dot_product(cross1, unit_normal) >= -ORTHOGONAL_TOLERANCE && dot_product(cross2, unit_normal) >= -ORTHOGONAL_TOLERANCE && dot_product(cross3, unit_normal) >= -ORTHOGONAL_TOLERANCE) {
