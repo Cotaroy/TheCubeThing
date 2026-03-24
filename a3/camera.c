@@ -34,7 +34,6 @@ void camera_worker_work(
 
     int tasks_completed = 0;
     while(read(fd_read, &task, sizeof(CameraRaycastTask)) > 0) {
-        // printf("worker %d actually received its %dth task\n", worker_idx, tasks_completed + 1);
         double pos[3] = {
             task.ray_origin_x,
             task.ray_origin_y,
@@ -64,6 +63,7 @@ void camera_worker_work(
             perror("child write");
             exit(1);
         }
+        printf("child wrote result for pixel (%d, %d)\n", result->image_x, result->image_y);
 
         tasks_completed++;
     }
@@ -299,6 +299,7 @@ void capture_image(
                     + task_result->image_x;
                 film->distances[film_idx] = task_result->distance;
                 // printf("(%d, %d) Distance: %lf\n", task_result->image_x, task_result->image_y, task_result->distance);
+                printf("received result for pixel (%d, %d)\n", task_result->image_x, task_result->image_y);
                 tasks_completed++;
             }
 
@@ -328,7 +329,9 @@ void capture_image(
 
     // end time
     gettimeofday(&stop, NULL);
-    printf("took %lu microseconds\n", (stop.tv_sec - start.tv_sec) * 1000000 + stop.tv_usec - start.tv_usec);
+    printf("took %lu microseconds. exiting with %d tasks completed\n",
+            (stop.tv_sec - start.tv_sec) * 1000000 + stop.tv_usec - start.tv_usec,
+            tasks_completed);
 
     for(int i = 0; i < num_tasks; i++) {
         // printf("[] %d\n", i);
@@ -352,6 +355,9 @@ int main() {
     map->width = 32;
     map->height = 32;
     map->distances = malloc(sizeof(double) * 32 * 32);
+    for(int i = 0; i < 32 * 32; i++) {
+        map->distances[i] = -42;
+    }
 
     capture_image(cube, map, PI/4, 1, 0, 0, 0, 2.25, 0);
     render(map);
