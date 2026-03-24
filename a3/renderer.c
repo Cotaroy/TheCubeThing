@@ -46,7 +46,12 @@ void render(DistanceMap *map) {
             int idx = y * width + x;
             double dist = distances[idx];
 
-            printf("%.1lf ", dist);
+            // printf("%.1lf ", dist);
+
+            if(dist > 32) printf(" ");
+            else if(dist > 4) printf("*");
+            else if(dist > 0) printf("#");
+            else printf("@");
         }
         printf("\n");
     }

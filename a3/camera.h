@@ -6,8 +6,9 @@ typedef struct {
     double ray_origin_x;
     double ray_origin_y;
     double ray_origin_z;
-    double ray_azimuth;
-    double ray_inclination;
+    double ray_direction_x; // not necessarily normalised
+    double ray_direction_y;
+    double ray_direction_z;
 } CameraRaycastTask;
 
 typedef struct {

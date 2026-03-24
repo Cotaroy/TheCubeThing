@@ -3,6 +3,7 @@
 #include <sys/select.h>
 #include <sys/time.h>
 #include <unistd.h>
+#include <math.h>
 #include "camera.h"
 #include "raycast.h"
 #include "renderer.h"
@@ -10,6 +11,14 @@
 #define PI (3.14159265358979323846)
 
 #define NUM_WORKERS 8
+
+
+void normalise_vector_mutate(double *x, double *y, double *z) {
+    double length = sqrt((*x)*(*x) + (*y)*(*y) + (*z)*(*z));
+    *x /= length;
+    *y /= length;
+    *z /= length;
+}
 
 
 void camera_worker_work(
@@ -33,10 +42,19 @@ void camera_worker_work(
         };
         // printf("parameters to shoot_ray: pos=(%lf,%lf,%lf),azim=%lf,incl=%lf",
         //         pos[0], pos[1], pos[2], task.ray_azimuth, task.ray_inclination);
-        double distance = shoot_ray(pos,
-                task.ray_azimuth,
-                task.ray_inclination,
-                collidable_entities);
+
+        normalise_vector_mutate(
+                &task.ray_direction_x,
+                &task.ray_direction_y,
+                &task.ray_direction_z
+        );
+        double distance = shoot_ray(
+                pos,
+                task.ray_direction_x,
+                task.ray_direction_y,
+                task.ray_direction_z,
+                collidable_entities
+        );
 
         // printf("[%d] Distance: %lf\n", worker_idx, distance);
         result->image_x = task.image_x;
@@ -128,20 +146,38 @@ void capture_image(
         double camera_x,
         double camera_y,
         double camera_z,
-        double camera_azimuth,
-        double camera_inclination) {
+        double camera_forward_azimuth,
+        double camera_forward_inclination) {
 
     if(film == NULL) {
         fprintf(stderr, "must provide nonnull distance map");
         exit(1);
     }
 
-    int num_workers = NUM_WORKERS;
-    pid_t pids[num_workers];
-    int read_fds[num_workers];
-    int write_fds[num_workers];
+    // find the three unit vectors that define the axes of the camera
+    // definitely should not compute this on every frame
+    // but it is here for now
+    double camera_forward[3] = {
+        cos(camera_forward_azimuth) * sin(camera_forward_inclination),
+        sin(camera_forward_azimuth) * sin(camera_forward_inclination),
+        cos(camera_forward_inclination)
+    };
+    double camera_upward[3] = {
+        cos(camera_forward_azimuth) * sin(camera_forward_inclination - 2*PI),
+        sin(camera_forward_azimuth) * sin(camera_forward_inclination - 2*PI),
+        cos(camera_forward_inclination - 2*PI)
+    };
+    double camera_rightward[3] = {
+        camera_forward[1]*camera_upward[2]-camera_forward[2]*camera_upward[1],
+        camera_forward[2]*camera_upward[0]-camera_forward[0]*camera_upward[2],
+        camera_forward[0]*camera_upward[1]-camera_forward[1]*camera_upward[0]
+    };
 
-    camera_spawn_workers(pids, read_fds, write_fds, num_workers, entities);
+    pid_t pids[NUM_WORKERS];
+    int read_fds[NUM_WORKERS];
+    int write_fds[NUM_WORKERS];
+
+    camera_spawn_workers(pids, read_fds, write_fds, NUM_WORKERS, entities);
 
 
     int num_tasks = film->width * film->height;
@@ -150,55 +186,61 @@ void capture_image(
     int task_list_tail = 0;
 
     // calculate what the vertical and horizontal view angles should be
-    double a_azim = horizontal_view_angle;
-    double a_incl =
+    double ax = horizontal_view_angle;
+    double ay =
         (1 / pixel_aspect_ratio) *
         (film->height / film->width) *
-        (a_azim);
+        (ax);
 
     // calculate the step angles between each ray
-    double d_azim = a_azim / film->width;
-    double d_incl = a_incl / film->height;
+    double dx = ax / film->width;
+    double dy = ay / film->height;
 
 
-    // create all the tasks
-    double azim = camera_azimuth + (a_azim / 2); // counterclockwise from camera
-    double incl = camera_inclination - (a_incl / 2); // up from camera
+    // printf("======================================\n");
+    // printf("Top left ray has θ=%lf, φ=%lf.\n", azim, incl);
+    // printf("pxAR=%lf, a_azim=%lf, a_incl=%lf, d_azim=%lf, d_incl=%lf.\n",
+    //         pixel_aspect_ratio,
+    //         a_azim, a_incl,
+    //         d_azim, d_incl);
+    // printf("======================================\n");
 
-    printf("======================================\n");
-    printf("Top left ray has θ=%lf, φ=%lf.\n", azim, incl);
-    printf("pxAR=%lf, a_azim=%lf, a_incl=%lf, d_azim=%lf, d_incl=%lf.\n",
-            pixel_aspect_ratio,
-            a_azim, a_incl,
-            d_azim, d_incl);
-    printf("======================================\n");
 
-    for(int y = 0; y < film->height; y++, incl += d_incl) {
+    // set the starting angles
+    double theta_x = -(ax / 2); // radians from Forward towards Rightward
+    double theta_y = (ay / 2);  // radians from Forward towards Upward
+
+    for(int ry = 0; ry < film->height; ry++, theta_y -= dy) {
         // start from the top row, move down
-        for(int x = 0; x < film->width; x++, azim -= d_azim) {
-            // start from the leftmost column, move right (clockwise; azim decr)
+        for(int rx = 0; rx < film->width; rx++, theta_x += dx) {
+            // start from the leftmost column, move right
             CameraRaycastTask *task = malloc(sizeof(CameraRaycastTask));
             if(task == NULL) {
                 perror("malloc");
                 exit(1);
             }
-            task->image_x = x;
-            task->image_y = y;
+
+            double rightward_coefficient = tan(theta_x);
+            double upward_coefficient= tan(theta_y);
+
+            task->image_x = rx;
+            task->image_y = ry;
             task->ray_origin_x = camera_x;
             task->ray_origin_y = camera_y;
             task->ray_origin_z = camera_z;
-            task->ray_azimuth = azim;
-            task->ray_inclination = incl;
+            task->ray_direction_x =
+                camera_forward[0] +
+                camera_rightward[0] * rightward_coefficient +
+                camera_upward[0] * upward_coefficient;
+            task->ray_direction_y =
+                camera_forward[1] +
+                camera_rightward[1] * rightward_coefficient +
+                camera_upward[1] * upward_coefficient;
+            task->ray_direction_z =
+                camera_forward[2] +
+                camera_rightward[2] * rightward_coefficient +
+                camera_upward[2] * upward_coefficient;
             task_list[task_list_tail] = task;
-
-
-            // printf("task: origin=(%lf,%lf,%lf),azim=%lf,incl=%lf\n",
-            //         camera_x,
-            //         camera_y,
-            //         camera_z,
-            //         azim,
-            //         incl
-            //       );
 
             task_list_tail++;
         }
@@ -225,7 +267,7 @@ void capture_image(
     while(tasks_completed < num_tasks) {
         // since select_*_fds gets modified by select,
         // we need to do this on every loop iteration
-        for (int i = 0; i < num_workers; i++) {
+        for (int i = 0; i < NUM_WORKERS; i++) {
             FD_SET(read_fds[i], &select_read_fds);
             if(read_fds[i] >= max_read_fd) {
                 max_read_fd = read_fds[i] + 1;
@@ -243,7 +285,7 @@ void capture_image(
             exit(1);
         }
 
-        for (int i = 0; i < num_workers; i++) {
+        for (int i = 0; i < NUM_WORKERS; i++) {
             if(FD_ISSET(read_fds[i], &select_read_fds) != 0) {
                 // this one has something to read from
                 if(read(read_fds[i], task_result,
@@ -311,7 +353,7 @@ int main() {
     map->height = 32;
     map->distances = malloc(sizeof(double) * 32 * 32);
 
-    capture_image(cube, map, PI/4, 1, 0, 0, 0, 0, PI/16);
+    capture_image(cube, map, PI/4, 1, 0, 0, 0, 2.25, 0);
     render(map);
 
     return 0;
