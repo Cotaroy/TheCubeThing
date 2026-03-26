@@ -29,7 +29,7 @@ void camera_worker_work(
 
     // overwritten repeatedly to store the current task & result
     CameraRaycastTask task;
-    CameraRaycastTaskResult *result = malloc(sizeof(CameraRaycastTaskResult));
+    CameraRaycastTaskResult result;
 
 
     int tasks_completed = 0;
@@ -56,19 +56,17 @@ void camera_worker_work(
         );
 
         // printf("[%d] Distance: %lf\n", worker_idx, distance);
-        result->image_x = task.image_x;
-        result->image_y = task.image_y;
-        result->distance = distance;
-        if(write(fd_write, result, sizeof(*result)) <= 0) {
+        result.image_x = task.image_x;
+        result.image_y = task.image_y;
+        result.distance = distance;
+        if(write(fd_write, &result, sizeof(result)) <= 0) {
             perror("child write");
-            free(result);
             exit(1);
         }
         // printf("child wrote result for pixel (%d, %d)\n", result->image_x, result->image_y);
 
         tasks_completed++;
     }
-    free(result);
     // printf("Worker %d exiting after completing %d tasks.\n", worker_idx, tasks_completed);
     exit(0);
 }
@@ -183,11 +181,7 @@ void capture_image(
 
 
     int num_tasks = film->width * film->height;
-    CameraRaycastTask **task_list = malloc(sizeof(CameraRaycastTask*) * num_tasks);
-    if (task_list == NULL) {
-      perror("malloc");
-      exit(1);
-    }
+    CameraRaycastTask *task_list[num_tasks];
     int task_list_head = 0;
     int task_list_tail = 0;
 
@@ -265,8 +259,7 @@ void capture_image(
 
     int tasks_assigned = 0;
     int tasks_completed = 0;
-    CameraRaycastTaskResult *task_result =
-        malloc(sizeof(CameraRaycastTaskResult)); // repeatedly overwritten
+    CameraRaycastTaskResult task_result; // repeatedly overwritten
 
 
     int max_read_fd, max_write_fd;
@@ -314,16 +307,16 @@ void capture_image(
         for (int i = 0; i < NUM_WORKERS; i++) {
             if(FD_ISSET(read_fds[i], &select_read_fds) != 0) {
                 // this one has something to read from
-                if(read(read_fds[i], task_result,
+                if(read(read_fds[i], &task_result,
                             sizeof(CameraRaycastTaskResult)) <= 0) {
                     perror("read");
                     exit(1);
                 }
 
                 int film_idx =
-                    (film->width * task_result->image_y)
-                    + task_result->image_x;
-                film->distances[film_idx] = task_result->distance;
+                    (film->width * task_result.image_y)
+                    + task_result.image_x;
+                film->distances[film_idx] = task_result.distance;
                 // printf("(%d, %d) Distance: %lf\n", task_result->image_x, task_result->image_y, task_result->distance);
                 // printf("received result for pixel (%d, %d)\n", task_result->image_x, task_result->image_y);
                 tasks_completed++;
@@ -352,7 +345,6 @@ void capture_image(
        }
         // printf("%d out of %d\n", tasks_completed, num_tasks);
     }
-    free(task_result);
 
     // end time
     gettimeofday(&stop, NULL);
@@ -365,6 +357,5 @@ void capture_image(
         free(task_list[i]);
         task_list[i] = NULL;
     }
-    free(task_list);
 }
 
