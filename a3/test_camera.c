@@ -32,6 +32,9 @@ int main() {
     capture_image(cube, map, PI/4, 11./21., 0, 0, -20, 0, 0);
     render(map);
 
+    free_all_entities(cube);
+    free_all_vertices(vertices);
+
     return 0;
 }
 
