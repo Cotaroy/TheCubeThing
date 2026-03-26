@@ -63,11 +63,11 @@ void camera_worker_work(
             perror("child write");
             exit(1);
         }
-        printf("child wrote result for pixel (%d, %d)\n", result->image_x, result->image_y);
+        // printf("child wrote result for pixel (%d, %d)\n", result->image_x, result->image_y);
 
         tasks_completed++;
     }
-    printf("Worker %d exiting after completing %d tasks.\n", worker_idx, tasks_completed);
+    // printf("Worker %d exiting after completing %d tasks.\n", worker_idx, tasks_completed);
     exit(0);
 }
 
@@ -163,9 +163,9 @@ void capture_image(
         cos(camera_forward_inclination)
     };
     double camera_upward[3] = {
-        cos(camera_forward_azimuth) * sin(camera_forward_inclination - 2*PI),
-        sin(camera_forward_azimuth) * sin(camera_forward_inclination - 2*PI),
-        cos(camera_forward_inclination - 2*PI)
+        cos(camera_forward_azimuth) * sin(camera_forward_inclination - PI/2),
+        sin(camera_forward_azimuth) * sin(camera_forward_inclination - PI/2),
+        cos(camera_forward_inclination - PI/2)
     };
     double camera_rightward[3] = {
         camera_forward[1]*camera_upward[2]-camera_forward[2]*camera_upward[1],
@@ -222,6 +222,7 @@ void capture_image(
 
             double rightward_coefficient = tan(theta_x);
             double upward_coefficient= tan(theta_y);
+            printf("%f, %f\n", theta_x, theta_y);
 
             task->image_x = rx;
             task->image_y = ry;
@@ -240,6 +241,12 @@ void capture_image(
                 camera_forward[2] +
                 camera_rightward[2] * rightward_coefficient +
                 camera_upward[2] * upward_coefficient;
+
+            printf("(%f, %f, %f)\n", camera_forward[0], camera_rightward[0], camera_upward[0]);
+            printf("(%f, %f, %f)\n", camera_forward[1], camera_rightward[1], camera_upward[1]);
+            printf("(%f, %f, %f)\n", camera_forward[2], camera_rightward[2], camera_upward[2]);
+            printf("Shooting in direction (%f, %f, %f)\n", task->ray_direction_x, task->ray_direction_y, task->ray_direction_z);
+
             task_list[task_list_tail] = task;
 
             task_list_tail++;
@@ -299,7 +306,7 @@ void capture_image(
                     + task_result->image_x;
                 film->distances[film_idx] = task_result->distance;
                 // printf("(%d, %d) Distance: %lf\n", task_result->image_x, task_result->image_y, task_result->distance);
-                printf("received result for pixel (%d, %d)\n", task_result->image_x, task_result->image_y);
+                // printf("received result for pixel (%d, %d)\n", task_result->image_x, task_result->image_y);
                 tasks_completed++;
             }
 
@@ -323,7 +330,7 @@ void capture_image(
               tasks_assigned++;
           }
         }
-        printf("%d out of %d\n", tasks_completed, num_tasks);
+        // printf("%d out of %d\n", tasks_completed, num_tasks);
     }
 
     // end time
@@ -358,7 +365,7 @@ int main() {
         map->distances[i] = -42;
     }
 
-    capture_image(cube, map, PI/4, 1, 0, 0, 0, 2.25, 0);
+    capture_image(cube, map, PI, 1, 0, 0, 0, 2.25, 0);
     render(map);
 
     return 0;
