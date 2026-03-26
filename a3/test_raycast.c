@@ -21,7 +21,7 @@ int main() {
   printf("Actual: %f\n", distance);
 
   // test same ray but put a cube in front
-  create_rectangle(&cube, -1.5, -1.5, 3, 3, 3, 3);
+  Entity *cube1 = create_rectangle(cube, -1.5, -1.5, 3, 3, 3, 3);
  
   distance = shoot_ray(pos, x, y, z, cube);
 
@@ -63,5 +63,5 @@ int main() {
   printf("Actual: %f\n", distance);
 
   free_all_entities(cube2);
-  free_all_entities(cube);
+  free_all_entities(cube1);
 }

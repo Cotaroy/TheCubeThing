@@ -25,7 +25,7 @@ typedef struct vertex {
 Entity *create_entity(Triangle *object);
 
 // (x,y,z) is the coordinate of the front left bottom vertex of the rectangle
-Entity *create_rectangle(Entity **entities, double x, double y, double z, double x_length, double y_length, double z_length);
+Entity *create_rectangle(Entity *entities, double x, double y, double z, double x_length, double y_length, double z_length);
 
 // degree is the degree of rotation
 // (x,y,z) is the position we are rotating around
