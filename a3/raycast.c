@@ -106,11 +106,11 @@ double get_distance(double *pos, double x_vector, double y_vector, double z_vect
 // if exit status is 0, then process terminated normally
 double shoot_ray(double *pos, double x_vector, double y_vector, double z_vector, Entity *entities) {
   Entity *curr_entity = entities;
-  Triangle *curr_triangle = entities->object;
   
   double min_distance = INFINITY;
 
   while (curr_entity != NULL) {
+    Triangle *curr_triangle = curr_entity->object;
     while (curr_triangle != NULL) {
       double distance = get_distance(pos, x_vector, y_vector, z_vector, curr_triangle);
 

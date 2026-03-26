@@ -181,7 +181,11 @@ void capture_image(
 
 
     int num_tasks = film->width * film->height;
-    CameraRaycastTask *task_list[num_tasks];
+    CameraRaycastTask **task_list = malloc(sizeof(CameraRaycastTask*) * num_tasks);
+    if (task_list == NULL) {
+      perror("malloc");
+      exit(1);
+    }
     int task_list_head = 0;
     int task_list_tail = 0;
 
@@ -189,7 +193,7 @@ void capture_image(
     double ax = horizontal_view_angle;
     double ay =
         (1 / pixel_aspect_ratio) *
-        (film->height / film->width) *
+        ((double) film->height / film->width) *
         (ax);
 
     // calculate the step angles between each ray
@@ -207,11 +211,11 @@ void capture_image(
 
 
     // set the starting angles
-    double theta_x = -(ax / 2); // radians from Forward towards Rightward
     double theta_y = (ay / 2);  // radians from Forward towards Upward
 
     for(int ry = 0; ry < film->height; ry++, theta_y -= dy) {
         // start from the top row, move down
+        double theta_x = -(ax / 2); // radians from Forward towards Rightward
         for(int rx = 0; rx < film->width; rx++, theta_x += dx) {
             // start from the leftmost column, move right
             CameraRaycastTask *task = malloc(sizeof(CameraRaycastTask));
@@ -222,7 +226,7 @@ void capture_image(
 
             double rightward_coefficient = tan(theta_x);
             double upward_coefficient= tan(theta_y);
-            printf("%f, %f\n", theta_x, theta_y);
+            // printf("%f, %f\n", theta_x, theta_y);
 
             task->image_x = rx;
             task->image_y = ry;
@@ -242,10 +246,10 @@ void capture_image(
                 camera_rightward[2] * rightward_coefficient +
                 camera_upward[2] * upward_coefficient;
 
-            printf("(%f, %f, %f)\n", camera_forward[0], camera_rightward[0], camera_upward[0]);
-            printf("(%f, %f, %f)\n", camera_forward[1], camera_rightward[1], camera_upward[1]);
-            printf("(%f, %f, %f)\n", camera_forward[2], camera_rightward[2], camera_upward[2]);
-            printf("Shooting in direction (%f, %f, %f)\n", task->ray_direction_x, task->ray_direction_y, task->ray_direction_z);
+            // printf("(%f, %f, %f)\n", camera_forward[0], camera_rightward[0], camera_upward[0]);
+            // printf("(%f, %f, %f)\n", camera_forward[1], camera_rightward[1], camera_upward[1]);
+            // printf("(%f, %f, %f)\n", camera_forward[2], camera_rightward[2], camera_upward[2]);
+            // printf("[%d]: Shooting in direction (%f, %f, %f)\n", task_list_tail, task->ray_direction_x, task->ray_direction_y, task->ray_direction_z);
 
             task_list[task_list_tail] = task;
 
@@ -270,6 +274,19 @@ void capture_image(
     FD_ZERO(&select_write_fds);
     max_read_fd = -1;
     max_write_fd = -1;
+
+    for (int i = 0; i < NUM_WORKERS; i++) {
+      if(write(write_fds[i],
+          task_list[task_list_head],
+          sizeof(*task_list[task_list_head])) < 0) {
+        perror("write");
+        exit(1);
+      }
+    // printf("sent task to worker at index %d\n", i);
+      task_list_head++;
+      tasks_assigned++;
+    }
+
 
     while(tasks_completed < num_tasks) {
         // since select_*_fds gets modified by select,
@@ -308,28 +325,29 @@ void capture_image(
                 // printf("(%d, %d) Distance: %lf\n", task_result->image_x, task_result->image_y, task_result->distance);
                 // printf("received result for pixel (%d, %d)\n", task_result->image_x, task_result->image_y);
                 tasks_completed++;
+                if(FD_ISSET(write_fds[i], &select_write_fds) != 0) {
+                // this one is available for writing to
+
+                  if(task_list_head >= num_tasks) {
+                    break;
+                  }
+
+                  if(write(write_fds[i],
+                            task_list[task_list_head],
+                            sizeof(*task_list[task_list_head])) < 0) {
+                    perror("write");
+                    exit(1);
+                  }
+                // printf("sent task to worker at index %d\n", i);
+                  task_list_head++;
+                  tasks_assigned++;
+                }
+ 
             }
 
         }
         for (int i = 0; i < NUM_WORKERS; i++) {
-          if(FD_ISSET(write_fds[i], &select_write_fds) != 0) {
-              // this one is available for writing to
-
-              if(task_list_head >= num_tasks) {
-                  break;
-              }
-
-              if(write(write_fds[i],
-                          task_list[task_list_head],
-                          sizeof(*task_list[task_list_head])) < 0) {
-                  perror("write");
-                  exit(1);
-              }
-              // printf("sent task to worker at index %d\n", i);
-              task_list_head++;
-              tasks_assigned++;
-          }
-        }
+       }
         // printf("%d out of %d\n", tasks_completed, num_tasks);
     }
 
@@ -342,43 +360,37 @@ void capture_image(
     for(int i = 0; i < num_tasks; i++) {
         // printf("[] %d\n", i);
         free(task_list[i]);
+        task_list[i] = NULL;
     }
+    free(task_list);
 }
 
 
 
 int main() {
     Vertex *vertices = NULL;
-    Entity *cube =
-        create_rectangle(NULL, &vertices, -1, -1, 8, 3, 3, 3);
-    create_rectangle(&cube, &vertices, -1, -1, 8, 3, 3, 3);
-    create_rectangle(&cube, &vertices, -1, -1, 8, 3, 3, 3);
-    create_rectangle(&cube, &vertices, -1, -1, 8, 3, 3, 3);
-    create_rectangle(&cube, &vertices, -1, -1, 8, 3, 3, 3);
+    // Entity *cube =
+    //     create_rectangle(NULL, &vertices, -1.5, -1.5, 8, 3, 3, 3);
+    // create_rectangle(&cube, &vertices, -10, -10, 20, 20, 20, 1);
+    // create_rectangle(&cube, &vertices, -100, -100, 100, 200, 200, 1);
 
+    Entity *cube =
+        create_rectangle(NULL, &vertices, -100, -100, 100, 200, 200, 1);
+    create_rectangle(&cube, &vertices, -10, -10, 20, 20, 20, 1);
+    create_rectangle(&cube, &vertices, -1.5, -1.5, 1, 3, 3, 3);
 
     DistanceMap *map = malloc(sizeof(DistanceMap));
-    map->width = 32;
-    map->height = 32;
-    map->distances = malloc(sizeof(double) * 32 * 32);
-    for(int i = 0; i < 32 * 32; i++) {
+    map->width = 235;
+    map->height = 70;
+    map->distances = malloc(sizeof(double) * map->width * map->height);
+    for(int i = 0; i < map->width * map->height; i++) {
         map->distances[i] = -42;
     }
 
-    capture_image(cube, map, PI, 1, 0, 0, 0, 2.25, 0);
+    capture_image(cube, map, PI/4, 11./21., 0, 0, -20, 0, 0);
     render(map);
 
     return 0;
 }
-
-
-
-
-
-
-
-
-
-
 
 
