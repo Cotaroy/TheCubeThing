@@ -73,6 +73,14 @@ void camera_worker_work(
         perror("read");
         exit(1);
     }
+    if (close(fd_read) == -1) {
+        perror("close");
+        exit(1);
+    }
+    if (close(fd_write) == -1) {
+        perror("close");
+        exit(1);
+    }
     // printf("Worker %d exiting after completing %d tasks.\n", worker_idx, tasks_completed);
     exit(0);
 }
