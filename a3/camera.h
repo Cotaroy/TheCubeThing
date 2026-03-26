@@ -1,4 +1,7 @@
+#ifndef CAMERA_H
+#define CAMERA_H
 #include "space.h"
+#include "renderer.h"
 
 typedef struct {
     int image_x;
@@ -18,3 +21,14 @@ typedef struct {
 } CameraRaycastTaskResult;
 
 
+void capture_image(
+        Entity *entities,
+        DistanceMap *film,
+        double horizontal_view_angle,
+        double pixel_aspect_ratio,
+        double camera_x,
+        double camera_y,
+        double camera_z,
+        double camera_forward_azimuth,
+        double camera_forward_inclination);
+#endif

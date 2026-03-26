@@ -1,7 +1,7 @@
 .PHONY: all clean
 FLAGS = -Wall -g
 
-all: test_space test_raycast camera
+all: test_space test_raycast test_camera
 
 test_space: test_space.o space.o
 	gcc ${FLAGS} -o $@ $^
@@ -25,9 +25,9 @@ renderer.o: renderer.c renderer.h
 	gcc ${FLAGS} -c $<
 
 
-# temporary
-camera: camera.c raycast.c space.c renderer.c camera.h raycast.h space.h renderer.h
-	gcc -Wall -g -o camera camera.c raycast.c space.c renderer.c -lm
+
+test_camera: test_camera.c camera.c raycast.c space.c renderer.c camera.h raycast.h space.h renderer.h
+	gcc -Wall -g -o test_camera test_camera.c camera.c raycast.c space.c renderer.c -lm
 
 tags: *.c *.h
 	ctags **.c **.h

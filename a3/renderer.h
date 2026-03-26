@@ -1,3 +1,6 @@
+#ifndef RENDERER_H
+#define RENDERER_H
+
 typedef struct {
     int width;
     int height;
@@ -10,3 +13,4 @@ typedef struct {
 
 void render(DistanceMap *map);
 
+#endif
