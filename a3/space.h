@@ -29,6 +29,7 @@ Entity *create_rectangle(Entity **entities, double x, double y, double z, double
 
 // degree is the degree of rotation
 // (x,y,z) is the position we are rotating around
+void translate(Entity *entity, double x_offset, double y_offset, double z_offset);
 void rotate_x(Entity *entity, double degree, double x, double y, double z);
 void rotate_y(Entity *entity, double degree, double x, double y, double z);
 void rotate_z(Entity *entity, double degree, double x, double y, double z);

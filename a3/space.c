@@ -162,6 +162,34 @@ Entity *create_rectangle(Entity **entities, double x, double y, double z, double
   return rectangle;
 }
 
+void translate(Entity *entity, double x_offset, double y_offset, double z_offset) {
+    Triangle *curr = entity->object;
+
+    entity->x_center += x_offset;
+    entity->y_center += y_offset;
+    entity->z_center += z_offset;
+
+    while(curr != NULL) {
+        double *vertex0 = curr->vertex0;
+        double *vertex1 = curr->vertex1;
+        double *vertex2 = curr->vertex2;
+
+        vertex0[0] += x_offset;
+        vertex0[1] += y_offset;
+        vertex0[2] += z_offset;
+
+        vertex1[0] += x_offset;
+        vertex1[1] += y_offset;
+        vertex1[2] += z_offset;
+
+        vertex2[0] += x_offset;
+        vertex2[1] += y_offset;
+        vertex2[2] += z_offset;
+
+        curr = curr->next;
+    }
+}
+
 void rotate_x(Entity *entity, double degree, double x, double y, double z) {
     Triangle *triangles = entity->object;
     Triangle *curr = triangles;
