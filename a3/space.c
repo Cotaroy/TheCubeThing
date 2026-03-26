@@ -183,15 +183,12 @@ void rotate_x(Entity *entity, double degree, double x, double y, double z) {
         vertex2[1] -= y;
         vertex2[2] -= z;
         
-        double v0x = vertex0[0];
         double v0y = vertex0[1];
         double v0z = vertex0[2];
 
-        double v1x = vertex1[0];
         double v1y = vertex1[1];
         double v1z = vertex1[2];
 
-        double v2x = vertex2[0];
         double v2y = vertex2[1];
         double v2z = vertex2[2];
 
@@ -204,6 +201,118 @@ void rotate_x(Entity *entity, double degree, double x, double y, double z) {
         vertex2[1] = cos(degree) * v2y - sin(degree) * v2z;
         vertex2[2] = sin(degree) * v2y + cos(degree) * v2z;
 
+        vertex0[0] += x;
+        vertex0[1] += y;
+        vertex0[2] += z;
+
+        vertex1[0] += x;
+        vertex1[1] += y;
+        vertex1[2] += z;
+
+        vertex2[0] += x;
+        vertex2[1] += y;
+        vertex2[2] += z;
+
+        curr = curr->next;
+    }
+
+}
+
+void rotate_y(Entity *entity, double degree, double x, double y, double z) {
+    Triangle *triangles = entity->object;
+    Triangle *curr = triangles;
+
+    while(curr != NULL) {
+        double *vertex0 = curr->vertex0;
+        double *vertex1 = curr->vertex1;
+        double *vertex2 = curr->vertex2;
+
+        vertex0[0] -= x;
+        vertex0[1] -= y;
+        vertex0[2] -= z;
+
+        vertex1[0] -= x;
+        vertex1[1] -= y;
+        vertex1[2] -= z;
+
+        vertex2[0] -= x;
+        vertex2[1] -= y;
+        vertex2[2] -= z;
+        
+        double v0x = vertex0[0];
+        double v0z = vertex0[2];
+
+        double v1x = vertex1[0];
+        double v1z = vertex1[2];
+
+        double v2x = vertex2[0];
+        double v2z = vertex2[2];
+
+        vertex0[0] = cos(degree) * v0x + sin(degree) * v0z;
+        vertex0[2] = - sin(degree) * v0x + cos(degree) * v0z;
+
+        vertex1[0] = cos(degree) * v1x + sin(degree) * v1z;
+        vertex1[2] = - sin(degree) * v1x + cos(degree) * v1z;
+
+        vertex2[0] = cos(degree) * v2x + sin(degree) * v2z;
+        vertex2[2] = - sin(degree) * v2x + cos(degree) * v2z;
+
+        vertex0[0] += x;
+        vertex0[1] += y;
+        vertex0[2] += z;
+
+        vertex1[0] += x;
+        vertex1[1] += y;
+        vertex1[2] += z;
+
+        vertex2[0] += x;
+        vertex2[1] += y;
+        vertex2[2] += z;
+
+        curr = curr->next;
+    }
+
+}
+
+void rotate_z(Entity *entity, double degree, double x, double y, double z) {
+    Triangle *triangles = entity->object;
+    Triangle *curr = triangles;
+
+    while(curr != NULL) {
+        double *vertex0 = curr->vertex0;
+        double *vertex1 = curr->vertex1;
+        double *vertex2 = curr->vertex2;
+
+        vertex0[0] -= x;
+        vertex0[1] -= y;
+        vertex0[2] -= z;
+
+        vertex1[0] -= x;
+        vertex1[1] -= y;
+        vertex1[2] -= z;
+
+        vertex2[0] -= x;
+        vertex2[1] -= y;
+        vertex2[2] -= z;
+        
+        double v0x = vertex0[0];
+        double v0y = vertex0[1];
+
+        double v1x = vertex1[0];
+        double v1y = vertex1[1];
+
+        double v2x = vertex2[0];
+        double v2y = vertex2[1];
+
+        vertex0[0] = cos(degree) * v0x - sin(degree) * v0y;
+        vertex0[1] = sin(degree) * v0x + cos(degree) * v0y;
+
+        vertex1[0] = cos(degree) * v1x - sin(degree) * v1y;
+        vertex1[1] = sin(degree) * v1x + cos(degree) * v1y;
+
+        vertex2[0] = cos(degree) * v2x - sin(degree) * v2y;
+        vertex2[1] = sin(degree) * v2x + cos(degree) * v2y;
+        
         vertex0[0] += x;
         vertex0[1] += y;
         vertex0[2] += z;

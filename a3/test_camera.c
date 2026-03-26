@@ -30,7 +30,7 @@ int main() {
 
     for (int i = 0; i < 9; i++) {
 
-        rotate_x(cube, i * PI/4, cube->x_center, cube->y_center, cube->z_center);
+        rotate_z(cube, i * PI/4, cube->x_center, cube->y_center, cube->z_center);
 
         capture_image(cube, map, PI/4, 11./21., 0, 0, -10, 0, 0);
         render(map);
