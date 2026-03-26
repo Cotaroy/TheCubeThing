@@ -4,6 +4,7 @@
 #include <sys/time.h>
 #include <unistd.h>
 #include <math.h>
+#include <sys/wait.h>
 #include "camera.h"
 #include "raycast.h"
 #include "renderer.h"
@@ -33,7 +34,8 @@ void camera_worker_work(
 
 
     int tasks_completed = 0;
-    while(read(fd_read, &task, sizeof(CameraRaycastTask)) > 0) {
+    int read_res;
+    while((read_res = read(fd_read, &task, sizeof(CameraRaycastTask))) > 0) {
         double pos[3] = {
             task.ray_origin_x,
             task.ray_origin_y,
@@ -66,6 +68,10 @@ void camera_worker_work(
         // printf("child wrote result for pixel (%d, %d)\n", result->image_x, result->image_y);
 
         tasks_completed++;
+    }
+    if (read_res == -1) {
+        perror("read");
+        exit(1);
     }
     // printf("Worker %d exiting after completing %d tasks.\n", worker_idx, tasks_completed);
     exit(0);
@@ -341,10 +347,23 @@ void capture_image(
             }
 
         }
-        for (int i = 0; i < NUM_WORKERS; i++) {
-       }
-        // printf("%d out of %d\n", tasks_completed, num_tasks);
     }
+
+    for (int i = 0; i < NUM_WORKERS; i++) {
+        if (close(write_fds[i]) == -1) {
+            perror("close");
+            exit(1);
+        }
+    }
+
+    for (int i = 0; i < NUM_WORKERS; i++) {
+        int status;
+        if (wait(&status) == -1) {
+            perror("wait");
+            exit(1);
+        }
+    }
+
 
     // end time
     gettimeofday(&stop, NULL);

@@ -22,8 +22,8 @@ int main() {
     create_rectangle(&cube, &vertices, -1.5, -1.5, 1, 3, 3, 3);
 
     DistanceMap *map = malloc(sizeof(DistanceMap));
-    map->width = 235;
-    map->height = 70;
+    map->width = 64;
+    map->height = 64;
     map->distances = malloc(sizeof(double) * map->width * map->height);
     for(int i = 0; i < map->width * map->height; i++) {
         map->distances[i] = -42;
