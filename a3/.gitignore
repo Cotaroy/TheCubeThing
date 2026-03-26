@@ -8,7 +8,7 @@ tags
 test_space
 test_raycast
 test_renderer
-camera
+test_camera
 
 # latex debris
 report/*.pdf
