@@ -278,7 +278,7 @@ void capture_image(
             }
         }
 
-        if(select(max_write_fd,
+        if(select(fmax(max_write_fd, max_read_fd),
                     &select_read_fds,
                     &select_write_fds, NULL, NULL) == -1) {
             perror("select");
@@ -303,28 +303,27 @@ void capture_image(
                 tasks_completed++;
             }
 
-            if(FD_ISSET(write_fds[i], &select_write_fds) != 0) {
-                // this one is available for writing to
-
-                if(task_list_head >= num_tasks) {
-                    break;
-                }
-
-                if(write(write_fds[i],
-                            task_list[task_list_head],
-                            sizeof(*task_list[task_list_head])) < 0) {
-                    perror("write");
-                    exit(1);
-                }
-                // printf("sent task to worker at index %d\n", i);
-                task_list_head++;
-                tasks_assigned++;
-            }
         }
+        for (int i = 0; i < NUM_WORKERS; i++) {
+          if(FD_ISSET(write_fds[i], &select_write_fds) != 0) {
+              // this one is available for writing to
 
-        if(task_list_head >= num_tasks) {
-            break;
+              if(task_list_head >= num_tasks) {
+                  break;
+              }
+
+              if(write(write_fds[i],
+                          task_list[task_list_head],
+                          sizeof(*task_list[task_list_head])) < 0) {
+                  perror("write");
+                  exit(1);
+              }
+              // printf("sent task to worker at index %d\n", i);
+              task_list_head++;
+              tasks_assigned++;
+          }
         }
+        printf("%d out of %d\n", tasks_completed, num_tasks);
     }
 
     // end time
