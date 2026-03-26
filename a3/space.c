@@ -166,6 +166,18 @@ void rotate_x(Entity *entity, double degree, double x, double y, double z) {
     Triangle *triangles = entity->object;
     Triangle *curr = triangles;
 
+    entity->y_center -= y;
+    entity->z_center -= z;
+
+    double cy = entity->y_center;
+    double cz = entity->z_center;
+
+    entity->y_center = cos(degree) * cy - sin(degree) * cz;
+    entity->z_center = sin(degree) * cy + cos(degree) * cz;
+
+    entity->y_center += y;
+    entity->z_center += z;
+
     while(curr != NULL) {
         double *vertex0 = curr->vertex0;
         double *vertex1 = curr->vertex1;
@@ -222,6 +234,18 @@ void rotate_y(Entity *entity, double degree, double x, double y, double z) {
     Triangle *triangles = entity->object;
     Triangle *curr = triangles;
 
+    entity->x_center -= x;
+    entity->z_center -= z;
+
+    double cx = entity->x_center;
+    double cz = entity->z_center;
+
+    entity->x_center = cos(degree) * cx + sin(degree) * cz;
+    entity->z_center = - sin(degree) * cx + cos(degree) * cz;
+
+    entity->x_center += x;
+    entity->z_center += z;
+
     while(curr != NULL) {
         double *vertex0 = curr->vertex0;
         double *vertex1 = curr->vertex1;
@@ -277,6 +301,18 @@ void rotate_y(Entity *entity, double degree, double x, double y, double z) {
 void rotate_z(Entity *entity, double degree, double x, double y, double z) {
     Triangle *triangles = entity->object;
     Triangle *curr = triangles;
+
+    entity->x_center -= x;
+    entity->y_center -= y;
+
+    double cx = entity->x_center;
+    double cy = entity->y_center;
+
+    entity->x_center = cos(degree) * cx - sin(degree) * cy;
+    entity->y_center = sin(degree) * cx + cos(degree) * cy;
+
+    entity->x_center += x;
+    entity->y_center += y;
 
     while(curr != NULL) {
         double *vertex0 = curr->vertex0;
