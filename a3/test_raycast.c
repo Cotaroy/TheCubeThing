@@ -6,11 +6,10 @@
 
 int main() {
 
-  Vertex *vertices = NULL;
   double pos[3] = {0, 0, 0};
 
   // test single ray
-  Entity *cube = create_rectangle(NULL, &vertices, -1.5, -1.5, 5, 3, 3, 3);
+  Entity *cube = create_rectangle(NULL, -1.5, -1.5, 5, 3, 3, 3);
 
   double x = cos(0) * sin(0);
   double y = sin(0) * sin(0);
@@ -22,7 +21,7 @@ int main() {
   printf("Actual: %f\n", distance);
 
   // test same ray but put a cube in front
-  create_rectangle(&cube, &vertices, -1.5, -1.5, 3, 3, 3, 3);
+  create_rectangle(&cube, -1.5, -1.5, 3, 3, 3, 3);
  
   distance = shoot_ray(pos, x, y, z, cube);
 
@@ -48,7 +47,7 @@ int main() {
   y = sin(PI/4) * sin(PI/4);
   z = cos(PI/4);
 
-  Entity *cube2 = create_rectangle(NULL, &vertices, 1, 1, 1, 1, 1, 1);
+  Entity *cube2 = create_rectangle(NULL, 1, 1, 1, 1, 1, 1);
   distance = shoot_ray(pos, x, y, z, cube2);
 
   printf("Expected: 2\n");
@@ -65,5 +64,4 @@ int main() {
 
   free_all_entities(cube2);
   free_all_entities(cube);
-  free_all_vertices(vertices);
 }

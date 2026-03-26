@@ -10,6 +10,9 @@ typedef struct triangle {
 
 typedef struct entity {
   Triangle *object;
+  double x_center;
+  double y_center;
+  double z_center;
   struct entity *next; // entity list will be NULL terminated
 } Entity;
 
@@ -22,8 +25,14 @@ typedef struct vertex {
 Entity *create_entity(Triangle *object);
 
 // (x,y,z) is the coordinate of the front left bottom vertex of the rectangle
-Entity *create_rectangle(Entity **entities, Vertex **vertex_list, double x, double y, double z, double x_length, double y_length, double z_length);
+Entity *create_rectangle(Entity **entities, double x, double y, double z, double x_length, double y_length, double z_length);
+
+// degree is the degree of rotation
+// (x,y,z) is the position we are rotating around
+void rotate_x(Entity *entity, double degree, double x, double y, double z);
+void rotate_y(Entity *entity, double degree, double x, double y, double z);
+void rotate_z(Entity *entity, double degree, double x, double y, double z);
+
 void free_all_entities(Entity *entities);
-void free_all_vertices(Vertex *vertices);
 
 #endif

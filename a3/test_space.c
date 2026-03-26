@@ -3,8 +3,7 @@
 
 int main() {
 
-  Vertex *vertices = NULL;
-  Entity *unit_cube = create_rectangle(NULL, &vertices, -1, -1, 8, 3, 3, 3);
+  Entity *unit_cube = create_rectangle(NULL, -1, -1, 8, 3, 3, 3);
   
   Entity *curr = unit_cube;
   while (curr != NULL) {
@@ -24,7 +23,6 @@ int main() {
   }
 
   free_all_entities(unit_cube);
-  free_all_vertices(vertices);
 
   return 0;
 }

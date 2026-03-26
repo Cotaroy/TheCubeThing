@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <math.h>
 #include "space.h"
 
 #define die(e) do { perror(e); exit(EXIT_FAILURE); } while (0);
@@ -58,12 +59,12 @@ Vertex *create_vertex(double *coordinate) {
 }
 
 // the centre will always be the origin
-Entity *create_rectangle(Entity **entities, Vertex **vertex_list, double x, double y, double z, double x_length, double y_length, double z_length) {
+Entity *create_rectangle(Entity **entities, double x, double y, double z, double x_length, double y_length, double z_length) {
   
-  double *vertices[8];
+  double *vertices[36];
 
   // allocate space for each vertex
-  for (int i = 0; i < 8; i++) {
+  for (int i = 0; i < 36; i++) {
     vertices[i] = malloc(sizeof(double) * 3);
     // handle error
     if (vertices[i] == NULL) {
@@ -76,52 +77,84 @@ Entity *create_rectangle(Entity **entities, Vertex **vertex_list, double x, doub
 
   // hard code each vertex ;-;
   vertices[0][0] = x; vertices[0][1] = y; vertices[0][2] = z;
+  vertices[8][0] = x; vertices[8][1] = y; vertices[8][2] = z;
+  vertices[9][0] = x; vertices[9][1] = y; vertices[9][2] = z;
+  vertices[10][0] = x; vertices[10][1] = y; vertices[10][2] = z;
+
   vertices[1][0] = x; vertices[1][1] = y; vertices[1][2] = z + z_length;
+  vertices[11][0] = x; vertices[11][1] = y; vertices[11][2] = z + z_length;
+  vertices[12][0] = x; vertices[12][1] = y; vertices[12][2] = z + z_length;
+  vertices[13][0] = x; vertices[13][1] = y; vertices[13][2] = z + z_length;
+  vertices[14][0] = x; vertices[14][1] = y; vertices[14][2] = z + z_length;
+
   vertices[2][0] = x; vertices[2][1] = y + y_length; vertices[2][2] = z;
+  vertices[15][0] = x; vertices[15][1] = y + y_length; vertices[15][2] = z;
+  vertices[16][0] = x; vertices[16][1] = y + y_length; vertices[16][2] = z;
+  vertices[17][0] = x; vertices[17][1] = y + y_length; vertices[17][2] = z;
+  vertices[18][0] = x; vertices[18][1] = y + y_length; vertices[18][2] = z;
+
   vertices[3][0] = x; vertices[3][1] = y + y_length; vertices[3][2] = z + z_length;
+  vertices[19][0] = x; vertices[19][1] = y + y_length; vertices[19][2] = z + z_length;
+  vertices[20][0] = x; vertices[20][1] = y + y_length; vertices[20][2] = z + z_length;
+  vertices[21][0] = x; vertices[21][1] = y + y_length; vertices[21][2] = z + z_length;
+
   vertices[4][0] = x + x_length; vertices[4][1] = y; vertices[4][2] = z;
+  vertices[22][0] = x + x_length; vertices[22][1] = y; vertices[22][2] = z;
+  vertices[23][0] = x + x_length; vertices[23][1] = y; vertices[23][2] = z;
+  vertices[24][0] = x + x_length; vertices[24][1] = y; vertices[24][2] = z;
+  vertices[25][0] = x + x_length; vertices[25][1] = y; vertices[25][2] = z;
+
   vertices[5][0] = x + x_length; vertices[5][1] = y; vertices[5][2] = z + z_length;
+  vertices[26][0] = x + x_length; vertices[26][1] = y; vertices[26][2] = z + z_length;
+  vertices[27][0] = x + x_length; vertices[27][1] = y; vertices[27][2] = z + z_length;
+  vertices[28][0] = x + x_length; vertices[28][1] = y; vertices[28][2] = z + z_length;
+
   vertices[6][0] = x + x_length; vertices[6][1] = y + y_length; vertices[6][2] = z;
+  vertices[29][0] = x + x_length; vertices[29][1] = y + y_length; vertices[29][2] = z;
+  vertices[30][0] = x + x_length; vertices[30][1] = y + y_length; vertices[30][2] = z;
+  vertices[31][0] = x + x_length; vertices[31][1] = y + y_length; vertices[31][2] = z;
+
   vertices[7][0] = x + x_length; vertices[7][1] = y + y_length; vertices[7][2] = z + z_length;
+  vertices[32][0] = x + x_length; vertices[32][1] = y + y_length; vertices[32][2] = z + z_length;
+  vertices[33][0] = x + x_length; vertices[33][1] = y + y_length; vertices[33][2] = z + z_length;
+  vertices[34][0] = x + x_length; vertices[34][1] = y + y_length; vertices[34][2] = z + z_length;
+  vertices[35][0] = x + x_length; vertices[35][1] = y + y_length; vertices[35][2] = z + z_length;
 
   // hard code each triangle FAHHHH
   Triangle *trig0 = create_triangle(vertices[0], vertices[1], vertices[5]);
-  Triangle *trig1 = create_triangle(vertices[0], vertices[5], vertices[4]);
+  Triangle *trig1 = create_triangle(vertices[8], vertices[26], vertices[4]);
   trig0->next = trig1;
 
-  Triangle *trig2 = create_triangle(vertices[4], vertices[5], vertices[7]);
+  Triangle *trig2 = create_triangle(vertices[22], vertices[27], vertices[7]);
   trig1->next = trig2;
-  Triangle *trig3 = create_triangle(vertices[4], vertices[7], vertices[6]);
+  Triangle *trig3 = create_triangle(vertices[23], vertices[32], vertices[6]);
   trig2->next = trig3;
 
-  Triangle *trig4 = create_triangle(vertices[6], vertices[7], vertices[3]);
+  Triangle *trig4 = create_triangle(vertices[29], vertices[33], vertices[3]);
   trig3->next = trig4;
-  Triangle *trig5 = create_triangle(vertices[6], vertices[3], vertices[2]);
+  Triangle *trig5 = create_triangle(vertices[30], vertices[19], vertices[2]);
   trig4->next = trig5;
   
-  Triangle *trig6 = create_triangle(vertices[2], vertices[3], vertices[1]);
+  Triangle *trig6 = create_triangle(vertices[15], vertices[20], vertices[11]);
   trig5->next = trig6;
-  Triangle *trig7 = create_triangle(vertices[2], vertices[1], vertices[0]);
+  Triangle *trig7 = create_triangle(vertices[16], vertices[12], vertices[9]);
   trig6->next = trig7;
 
-  Triangle *trig8 = create_triangle(vertices[1], vertices[3], vertices[7]);
+  Triangle *trig8 = create_triangle(vertices[13], vertices[21], vertices[34]);
   trig7->next = trig8;
-  Triangle *trig9 = create_triangle(vertices[1], vertices[7], vertices[5]);
+  Triangle *trig9 = create_triangle(vertices[14], vertices[35], vertices[28]);
   trig8->next = trig9;
 
-  Triangle *trig10 = create_triangle(vertices[2], vertices[0], vertices[4]);
+  Triangle *trig10 = create_triangle(vertices[17], vertices[10], vertices[24]);
   trig9->next = trig10;
-  Triangle *trig11 = create_triangle(vertices[2], vertices[4], vertices[6]);
+  Triangle *trig11 = create_triangle(vertices[18], vertices[25], vertices[31]);
   trig10->next = trig11;
 
-  // add all vertices to vertex list
-  for (int i = 0; i < 8; i++) {
-    Vertex *new_vertex = create_vertex(vertices[i]);
-    new_vertex->next = *vertex_list;
-    *vertex_list = new_vertex;
-  }
-
   Entity *rectangle = create_entity(trig0);
+  rectangle->x_center = x + x_length/2;
+  rectangle->y_center = y + y_length/2;
+  rectangle->z_center = z + z_length/2;
+
   if (entities != NULL) {
     rectangle->next = *entities;
     *entities = rectangle;
@@ -129,10 +162,72 @@ Entity *create_rectangle(Entity **entities, Vertex **vertex_list, double x, doub
   return rectangle;
 }
 
+void rotate_x(Entity *entity, double degree, double x, double y, double z) {
+    Triangle *triangles = entity->object;
+    Triangle *curr = triangles;
+
+    while(curr != NULL) {
+        double *vertex0 = curr->vertex0;
+        double *vertex1 = curr->vertex1;
+        double *vertex2 = curr->vertex2;
+
+        vertex0[0] -= x;
+        vertex0[1] -= y;
+        vertex0[2] -= z;
+
+        vertex1[0] -= x;
+        vertex1[1] -= y;
+        vertex1[2] -= z;
+
+        vertex2[0] -= x;
+        vertex2[1] -= y;
+        vertex2[2] -= z;
+        
+        double v0x = vertex0[0];
+        double v0y = vertex0[1];
+        double v0z = vertex0[2];
+
+        double v1x = vertex1[0];
+        double v1y = vertex1[1];
+        double v1z = vertex1[2];
+
+        double v2x = vertex2[0];
+        double v2y = vertex2[1];
+        double v2z = vertex2[2];
+
+        vertex0[1] = cos(degree) * v0y - sin(degree) * v0z;
+        vertex0[2] = sin(degree) * v0y + cos(degree) * v0z;
+
+        vertex1[1] = cos(degree) * v1y - sin(degree) * v1z;
+        vertex1[2] = sin(degree) * v1y + cos(degree) * v1z;
+        
+        vertex2[1] = cos(degree) * v2y - sin(degree) * v2z;
+        vertex2[2] = sin(degree) * v2y + cos(degree) * v2z;
+
+        vertex0[0] += x;
+        vertex0[1] += y;
+        vertex0[2] += z;
+
+        vertex1[0] += x;
+        vertex1[1] += y;
+        vertex1[2] += z;
+
+        vertex2[0] += x;
+        vertex2[1] += y;
+        vertex2[2] += z;
+
+        curr = curr->next;
+    }
+
+}
+
 void free_all_triangles(Triangle *triangle) {
   if (triangle == NULL) {
     return;
   }
+  free(triangle->vertex0);
+  free(triangle->vertex1);
+  free(triangle->vertex2);
 
   free_all_triangles(triangle->next);
   free(triangle);
@@ -150,16 +245,3 @@ void free_all_entities(Entity *entities) {
   free(entities);
 
 } 
-
-void free_all_vertices(Vertex *vertices) {
-  if (vertices == NULL) 
-  {
-    return;
-  }
-
-  free(vertices->coordinate);
-
-  free_all_vertices(vertices->next);
-  free(vertices);
-}
-

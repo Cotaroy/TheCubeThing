@@ -10,16 +10,15 @@
 #define PI (3.14159265358979323846)
 
 int main() {
-    Vertex *vertices = NULL;
-    // Entity *cube =
-    //     create_rectangle(NULL, &vertices, -1.5, -1.5, 8, 3, 3, 3);
+    Entity *cube =
+        create_rectangle(NULL, -1.5, -1.5, -1.5, 3, 3, 3);
     // create_rectangle(&cube, &vertices, -10, -10, 20, 20, 20, 1);
     // create_rectangle(&cube, &vertices, -100, -100, 100, 200, 200, 1);
 
-    Entity *cube =
-        create_rectangle(NULL, &vertices, -100, -100, 100, 200, 200, 1);
-    create_rectangle(&cube, &vertices, -10, -10, 20, 20, 20, 1);
-    create_rectangle(&cube, &vertices, -1.5, -1.5, 1, 3, 3, 3);
+    // Entity *cube =
+    //     create_rectangle(NULL, &vertices, -100, -100, 100, 200, 200, 1);
+    // create_rectangle(&cube, &vertices, -10, -10, 20, 20, 20, 1);
+    // create_rectangle(&cube, &vertices, -1.5, -1.5, 1, 3, 3, 3);
 
     DistanceMap *map = malloc(sizeof(DistanceMap));
     map->width = 64;
@@ -29,13 +28,18 @@ int main() {
         map->distances[i] = -42;
     }
 
-    capture_image(cube, map, PI/4, 11./21., 0, 0, -20, 0, 0);
-    render(map);
+    for (int i = 0; i < 9; i++) {
+
+        rotate_x(cube, i * PI/4, cube->x_center, cube->y_center, cube->z_center);
+
+        capture_image(cube, map, PI/4, 11./21., 0, 0, -10, 0, 0);
+        render(map);
+    }
+
 
     free(map->distances);
     free(map);
     free_all_entities(cube);
-    free_all_vertices(vertices);
 
     return 0;
 }

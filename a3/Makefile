@@ -4,7 +4,7 @@ FLAGS = -Wall -g
 all: test_space test_raycast test_camera
 
 test_space: test_space.o space.o
-	gcc ${FLAGS} -o $@ $^
+	gcc ${FLAGS} -o $@ $^ -lm
 
 test_raycast: test_raycast.o raycast.o space.o
 	gcc ${FLAGS} -o $@ $^ -lm
@@ -23,8 +23,6 @@ test_raycast.o: test_raycast.c raycast.h space.h
 
 renderer.o: renderer.c renderer.h
 	gcc ${FLAGS} -c $<
-
-
 
 test_camera: test_camera.c camera.c raycast.c space.c renderer.c camera.h raycast.h space.h renderer.h
 	gcc -Wall -g -o test_camera test_camera.c camera.c raycast.c space.c renderer.c -lm
