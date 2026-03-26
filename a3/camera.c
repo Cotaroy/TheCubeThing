@@ -61,11 +61,13 @@ void camera_worker_work(
         result->distance = distance;
         if(write(fd_write, result, sizeof(*result)) <= 0) {
             perror("child write");
+            free(result);
             exit(1);
         }
         // printf("child wrote result for pixel (%d, %d)\n", result->image_x, result->image_y);
 
         tasks_completed++;
+        free(result);
     }
     // printf("Worker %d exiting after completing %d tasks.\n", worker_idx, tasks_completed);
     exit(0);
