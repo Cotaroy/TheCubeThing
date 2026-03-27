@@ -6,6 +6,7 @@
 
 int main() {
 
+    printf("Testing shoot_ray:\n");
     double pos[3] = {0, 0, 0};
 
     EntitySpace *space = create_space();
@@ -71,6 +72,20 @@ int main() {
     printf("Expected: 1.73\n");
     printf("Actual: %f\n", distance);
 
+    printf("\n\nTesting shoot_light_ray:\n");
+    printf("Test 1: Light blocked by cube\nExpected: 0.0\n");
+
+    EntitySpace *space3 = create_space();
+    Entity *cube3 = create_rectangle(-.5, 2, -.5, 1, 1, 1);
+
+    add_to_entity_space(space3, cube3, 0);
+    LightSource *light = create_light_source(0, 3, 0, 500);
+    add_light_to_entity_space(space3, light, 0);
+    double intensity = shoot_light_ray(pos, 0, 1, 0, space3);
+
+    printf("Actual: %.1f\n", intensity);
+
     free_space(space);
     free_space(space2);
+    free_space(space3);
 }

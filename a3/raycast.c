@@ -28,7 +28,7 @@ void normalize(double *result, double *vector) {
 
 // helper for shoot ray, returns distance from triangle
 // return INFINITY if no intersection
-double get_distance(double *pos, double x_vector, double y_vector, double z_vector, Triangle *triangle) {
+double get_distance(double *pos, double x_vector, double y_vector, double z_vector, Triangle *triangle, double *intersection) {
 
   double ray_vec[3];
   ray_vec[0] = x_vector;
@@ -55,6 +55,11 @@ double get_distance(double *pos, double x_vector, double y_vector, double z_vect
 
   // check if ray_vec orthogonal to normal
   if (fabs(dot_product(ray_vec, plane_normal)) < ORTHOGONAL_TOLERANCE) {
+    if (intersection != NULL) {
+        intersection[0] = INFINITY;
+        intersection[1] = INFINITY;
+        intersection[2] = INFINITY;
+    }
     return INFINITY;
   }
 
@@ -64,7 +69,12 @@ double get_distance(double *pos, double x_vector, double y_vector, double z_vect
   double distance = -1 * (dot_product(unit_normal, pos) + plane_offset) / (dot_product(unit_normal, ray_vec));
 
   // if intersection is behind the source
-  if (distance < 0) {
+  if (distance < ORTHOGONAL_TOLERANCE) {
+    if (intersection != NULL) {
+        intersection[0] = INFINITY;
+        intersection[1] = INFINITY;
+        intersection[2] = INFINITY;
+    }
     return INFINITY;
   }
 
@@ -96,7 +106,16 @@ double get_distance(double *pos, double x_vector, double y_vector, double z_vect
 
   // actual logic for checking
   if (dot_product(cross1, unit_normal) >= -ORTHOGONAL_TOLERANCE && dot_product(cross2, unit_normal) >= -ORTHOGONAL_TOLERANCE && dot_product(cross3, unit_normal) >= -ORTHOGONAL_TOLERANCE) {
+    if (intersection != NULL) {
+        intersection[0] = intersection_point[0]; intersection[1] = intersection_point[1]; intersection[2] = intersection_point[2];
+    }
     return distance;
+  }
+
+  if (intersection != NULL) {
+    intersection[0] = INFINITY;
+    intersection[1] = INFINITY;
+    intersection[2] = INFINITY;
   }
   return INFINITY;
 
@@ -111,7 +130,7 @@ double shoot_ray(double *pos, double x_vector, double y_vector, double z_vector,
   for (int i = 0; i < MAX_ENTITIES; i++) {
     Triangle *curr_triangle = get_object(space, i);
     while (curr_triangle != NULL) {
-      double distance = get_distance(pos, x_vector, y_vector, z_vector, curr_triangle);
+      double distance = get_distance(pos, x_vector, y_vector, z_vector, curr_triangle, NULL);
 
       min_distance = fmin(min_distance, distance);
 
@@ -120,4 +139,70 @@ double shoot_ray(double *pos, double x_vector, double y_vector, double z_vector,
   }
 
   return min_distance;
+}
+
+double shoot_light_ray(double *pos, double x_vector, double y_vector, double z_vector, EntitySpace *space) {
+
+    double min_distance = INFINITY;
+    double min_intersection_point[3] = {INFINITY, INFINITY, INFINITY};
+
+    for (int i = 0; i < MAX_ENTITIES; i++) {
+        Triangle *curr_triangle = get_object(space, i);
+        while (curr_triangle != NULL) {
+
+            double intersection_point[3];
+
+            double distance = get_distance(pos, x_vector, y_vector, z_vector, curr_triangle, intersection_point);
+
+            if (min_distance > distance) {
+                min_intersection_point[0] = intersection_point[0];
+                min_intersection_point[1] = intersection_point[1];
+                min_intersection_point[2] = intersection_point[2];
+                min_distance = distance;
+            }
+
+            curr_triangle = curr_triangle->next;
+        }
+    }
+    
+    if (min_distance == INFINITY || min_intersection_point[0] == INFINITY) {
+        return 0;
+    }
+
+    double total_intensity = 0;
+
+    for (int i = 0; i < MAX_LIGHTS; i++) {
+        LightSource *source = get_light(space, i);
+        if (source == NULL) {
+            continue;
+        }
+
+        double x_to_light = source->x - min_intersection_point[0];
+        double y_to_light = source->y - min_intersection_point[1];
+        double z_to_light = source->z - min_intersection_point[2];
+
+        int obstructed = 0;
+
+        for (int j = 0; j < MAX_ENTITIES && obstructed == 0; j++) {
+            Triangle *curr_triangle = get_object(space, j);
+            while (curr_triangle != NULL) {
+
+                double distance = get_distance(pos, x_to_light, y_to_light, z_to_light, curr_triangle, NULL);
+
+                if (distance != INFINITY) {
+                    obstructed = 1;
+                    break;
+                }
+
+                curr_triangle = curr_triangle->next;
+            }
+        }
+
+        if (obstructed == 0) {
+            double distance_squared = x_to_light * x_to_light + y_to_light * y_to_light + z_to_light * z_to_light;
+            total_intensity += source->intensity / distance_squared;
+        }
+    }
+
+    return total_intensity / (min_distance * min_distance);
 }
