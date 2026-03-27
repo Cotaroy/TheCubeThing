@@ -6,62 +6,71 @@
 
 int main() {
 
-  double pos[3] = {0, 0, 0};
+    double pos[3] = {0, 0, 0};
 
-  // test single ray
-  Entity *cube = create_rectangle(NULL, -1.5, -1.5, 5, 3, 3, 3);
+    EntitySpace *space = create_space();
+    // test single ray
+    Entity *cube = create_rectangle(-1.5, -1.5, 5, 3, 3, 3);
 
-  double x = cos(0) * sin(0);
-  double y = sin(0) * sin(0);
-  double z = cos(0);
+    add_to_entity_space(space, cube, 0);
 
-  double distance = shoot_ray(pos, x, y, z, cube);
+    double x = cos(0) * sin(0);
+    double y = sin(0) * sin(0);
+    double z = cos(0);
 
-  printf("Expected: 5.000000\n");
-  printf("Actual: %f\n", distance);
+    double distance = shoot_ray(pos, x, y, z, space);
 
-  // test same ray but put a cube in front
-  Entity *cube1 = create_rectangle(cube, -1.5, -1.5, 3, 3, 3, 3);
- 
-  distance = shoot_ray(pos, x, y, z, cube);
+    printf("Expected: 5.000000\n");
+    printf("Actual: %f\n", distance);
 
-  printf("Expected: 3.000000\n");
-  printf("Actual: %f\n", distance);
-  
-  x = cos(0) * sin(PI/2);
-  y = sin(0) * sin(PI/2);
-  z = cos(PI/2);
-  // test shoot in x direction
-  distance = shoot_ray(pos, x, y, z, cube);
-  
-  printf("Expected: inf\n");
-  printf("Actual: %f\n", distance);
+    // test same ray but put a cube in front
+    Entity *cube1 = create_rectangle(-1.5, -1.5, 3, 3, 3, 3);
+    
+    add_to_entity_space(space, cube1, 1);
 
-  // test shoot ray backwards
-  distance = shoot_ray(pos, x, y, z, cube);
-  
-  printf("Expected: inf\n");
-  printf("Actual: %f\n", distance);
+    distance = shoot_ray(pos, x, y, z, space);
 
-  x = cos(PI/4) * sin(PI/4);
-  y = sin(PI/4) * sin(PI/4);
-  z = cos(PI/4);
+    printf("Expected: 3.000000\n");
+    printf("Actual: %f\n", distance);
 
-  Entity *cube2 = create_rectangle(NULL, 1, 1, 1, 1, 1, 1);
-  distance = shoot_ray(pos, x, y, z, cube2);
+    x = cos(0) * sin(PI/2);
+    y = sin(0) * sin(PI/2);
+    z = cos(PI/2);
+    // test shoot in x direction
+    distance = shoot_ray(pos, x, y, z, space);
 
-  printf("Expected: 2\n");
-  printf("Actual: %f\n", distance);
+    printf("Expected: inf\n");
+    printf("Actual: %f\n", distance);
 
-  x = cos(PI/4) * sin(0.9553166);
-  y = sin(PI/4) * sin(0.9553166);
-  z = cos(0.9553166);
+    // test shoot ray backwards
+    distance = shoot_ray(pos, x, y, z, space);
 
-  distance = shoot_ray(pos, x, y, z, cube2);
+    printf("Expected: inf\n");
+    printf("Actual: %f\n", distance);
 
-  printf("Expected: 1.73\n");
-  printf("Actual: %f\n", distance);
+    x = cos(PI/4) * sin(PI/4);
+    y = sin(PI/4) * sin(PI/4);
+    z = cos(PI/4);
 
-  free_all_entities(cube2);
-  free_all_entities(cube1);
+    EntitySpace *space2 = create_space();
+    Entity *cube2 = create_rectangle(1, 1, 1, 1, 1, 1);
+
+    add_to_entity_space(space2, cube2, 0);
+
+    distance = shoot_ray(pos, x, y, z, space2);
+
+    printf("Expected: 2\n");
+    printf("Actual: %f\n", distance);
+
+    x = cos(PI/4) * sin(0.9553166);
+    y = sin(PI/4) * sin(0.9553166);
+    z = cos(0.9553166);
+
+    distance = shoot_ray(pos, x, y, z, space2);
+
+    printf("Expected: 1.73\n");
+    printf("Actual: %f\n", distance);
+
+    free_space(space);
+    free_space(space2);
 }

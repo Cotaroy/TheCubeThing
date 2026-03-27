@@ -3,26 +3,21 @@
 
 int main() {
 
-  Entity *unit_cube = create_rectangle(NULL, -1, -1, 8, 3, 3, 3);
+    Entity *unit_cube = create_rectangle(-1, -1, 8, 3, 3, 3);
   
-  Entity *curr = unit_cube;
-  while (curr != NULL) {
-    Triangle *obj = curr->object;
+    Triangle *obj = unit_cube->object;
     Triangle *curr1 = obj;
 
     while (curr1 != NULL) {
-      printf("[");
-      printf("(%.0f, %.0f, %.0f), ", curr1->vertex0[0], curr1->vertex0[1], curr1->vertex0[2]);
-      printf("(%.0f, %.0f, %.0f), ", curr1->vertex1[0], curr1->vertex1[1], curr1->vertex1[2]);
-      printf("(%.0f, %.0f, %.0f)]\n", curr1->vertex2[0], curr1->vertex2[1], curr1->vertex2[2]);
+        printf("[");
+        printf("(%.0f, %.0f, %.0f), ", curr1->vertex0[0], curr1->vertex0[1], curr1->vertex0[2]);
+        printf("(%.0f, %.0f, %.0f), ", curr1->vertex1[0], curr1->vertex1[1], curr1->vertex1[2]);
+        printf("(%.0f, %.0f, %.0f)]\n", curr1->vertex2[0], curr1->vertex2[1], curr1->vertex2[2]);
 
-      curr1 = curr1->next;
+        curr1 = curr1->next;
     }
 
-    curr = curr->next;
-  }
+    free_entity(unit_cube);
 
-  free_all_entities(unit_cube);
-
-  return 0;
+    return 0;
 }

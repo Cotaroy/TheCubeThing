@@ -104,13 +104,12 @@ double get_distance(double *pos, double x_vector, double y_vector, double z_vect
 
 // Shoot a single ray in the x,y,z direction from pos, returns distance
 // if exit status is 0, then process terminated normally
-double shoot_ray(double *pos, double x_vector, double y_vector, double z_vector, Entity *entities) {
-  Entity *curr_entity = entities;
+double shoot_ray(double *pos, double x_vector, double y_vector, double z_vector, EntitySpace *space) {
   
   double min_distance = INFINITY;
 
-  while (curr_entity != NULL) {
-    Triangle *curr_triangle = curr_entity->object;
+  for (int i = 0; i < MAX_ENTITIES; i++) {
+    Triangle *curr_triangle = get_object(space, i);
     while (curr_triangle != NULL) {
       double distance = get_distance(pos, x_vector, y_vector, z_vector, curr_triangle);
 
@@ -118,7 +117,6 @@ double shoot_ray(double *pos, double x_vector, double y_vector, double z_vector,
 
       curr_triangle = curr_triangle->next;
     }
-    curr_entity = curr_entity->next;
   }
 
   return min_distance;

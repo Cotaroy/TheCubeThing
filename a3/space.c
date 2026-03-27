@@ -19,19 +19,9 @@ Triangle *create_triangle(double *v1, double *v2, double *v3) {
   return new_triangle;
 }
 
-Triangle *create_triangle_v(Vertex *v1, Vertex *v2, Vertex *v3) {
-
-  // make space for Triangle
-  Triangle *new_triangle = malloc(sizeof(Triangle));
-  if (new_triangle == NULL) {
-    die("malloc");
-  }
-  new_triangle->vertex0 = v1->coordinate;
-  new_triangle->vertex1 = v2->coordinate;
-  new_triangle->vertex2 = v3->coordinate;
-  new_triangle->next = NULL;
-
-  return new_triangle;
+EntitySpace *create_space() {
+    EntitySpace *space = malloc(sizeof(EntitySpace));
+    return space;
 }
 
 Entity *create_entity(Triangle *object) {
@@ -41,7 +31,6 @@ Entity *create_entity(Triangle *object) {
     die("malloc");
   }
   new_entity->object = object;
-  new_entity->next = NULL;
 
   return new_entity;
 }
@@ -58,8 +47,7 @@ Vertex *create_vertex(double *coordinate) {
   return new_vertex;
 }
 
-// the centre will always be the origin
-Entity *create_rectangle(Entity *entities, double x, double y, double z, double x_length, double y_length, double z_length) {
+Entity *create_rectangle(double x, double y, double z, double x_length, double y_length, double z_length) {
   
   double *vertices[36];
 
@@ -154,7 +142,6 @@ Entity *create_rectangle(Entity *entities, double x, double y, double z, double 
   rectangle->x_center = x + x_length/2;
   rectangle->y_center = y + y_length/2;
   rectangle->z_center = z + z_length/2;
-  rectangle->next = entities;
 
   return rectangle;
 }
@@ -403,15 +390,42 @@ void free_all_triangles(Triangle *triangle) {
   free(triangle);
 }
 
-void free_all_entities(Entity *entities) {
+void free_entity(Entity *entity) {
   
-  if (entities == NULL) {
+  if (entity == NULL) {
     return;
   }
 
-  free_all_triangles(entities->object);
+  free_all_triangles(entity->object);
 
-  free_all_entities(entities->next);
-  free(entities);
+  free(entity);
+  entity = NULL;
+}
 
-} 
+void free_space(EntitySpace *entities) {
+    
+    Entity **entity_list = entities->entity_list;
+
+    for (int i = 0; i < MAX_ENTITIES; i++) {
+        free_entity(entity_list[i]);
+        entity_list[i] = NULL;
+    }
+}
+
+void add_to_entity_space(EntitySpace *space, Entity *entity, int id) {
+    space->entity_list[id] = entity;
+}
+
+void delete_from_entity_space(EntitySpace *space, Entity *entity, int id) {
+    free_entity(space->entity_list[id]);
+    space->entity_list[id] = NULL;
+}
+
+Triangle *get_object(EntitySpace *space, int id) {
+    if (space->entity_list[id] == NULL) {
+        return NULL;
+    }
+
+    return space->entity_list[id]->object;
+
+}
