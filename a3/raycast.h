@@ -11,6 +11,6 @@ void normalize(double *result, double *vector);
 // return INFINITY if there is no intersection or if intersection is behind the source
 double get_distance(double *pos, double x_vector, double y_vector, double z_vector, Triangle *triangle);
 // return INFINITY if there is no intersection or if intersection is behind the source
-double shoot_ray(double *pos, double x_vector, double y_vector, double z_vector, Entity *entities);
+double shoot_ray(double *pos, double x_vector, double y_vector, double z_vector, EntitySpace *space);
 
 #endif
