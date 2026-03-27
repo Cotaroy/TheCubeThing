@@ -72,9 +72,9 @@ int main() {
     // build the scene
     EntitySpace *space = create_space();
     Entity *cube1 = create_rectangle(-.5, -.5, -.5, 1, 1, 1);
-    Entity *cube2 = create_rectangle(-100, -100, 100, 200, 200, 1);
-    LightSource *source = create_light_source(-3, 0, -5, 1000);
-    // LightSource *source2 = create_light_source(-3, -3, -3, 1000);
+    Entity *cube2 = create_rectangle(-.25, -.25, -.25, .5, .5, .5);
+    LightSource *source = create_light_source(0, -3, -5, 1000);
+    // LightSource *source2 = create_light_source(3, 0, -5, 1000);
     add_light_to_entity_space(space, source, 0);
     // add_light_to_entity_space(space, source2, 1);
     add_to_entity_space(space, cube1, 1);
@@ -101,10 +101,14 @@ int main() {
             I don't know if this is always actually true.
         */
 
-        // broadcast_translate(space,write_fds, 1, 0, 0, -10/65.0);
-        broadcast_rotate(space, write_fds, 1, MSGDETAIL_ROTATE_ENTITY_AXIS_X, PI/32, cube1->x_center, cube1->y_center, cube1->z_center);
-        broadcast_rotate(space, write_fds, 1, MSGDETAIL_ROTATE_ENTITY_AXIS_Y, PI/32, cube1->x_center, cube1->y_center, cube1->z_center);
-        broadcast_rotate(space, write_fds, 1, MSGDETAIL_ROTATE_ENTITY_AXIS_Z, PI/32, cube1->x_center, cube1->y_center, cube1->z_center);
+        broadcast_translate(space, write_fds, 2, 0, -3./60, 0);
+        broadcast_rotate(space, write_fds, 2, MSGDETAIL_ROTATE_ENTITY_AXIS_X, PI/32, cube2->x_center, cube2->y_center, cube2->z_center);
+        broadcast_rotate(space, write_fds, 2, MSGDETAIL_ROTATE_ENTITY_AXIS_Y, PI/32, cube2->x_center, cube2->y_center, cube2->z_center);
+        broadcast_rotate(space, write_fds, 2, MSGDETAIL_ROTATE_ENTITY_AXIS_Z, PI/32, cube2->x_center, cube2->y_center, cube2->z_center);
+
+        broadcast_rotate(space, write_fds, 1, MSGDETAIL_ROTATE_ENTITY_AXIS_X, -PI/64, cube1->x_center, cube1->y_center, cube1->z_center);
+        broadcast_rotate(space, write_fds, 1, MSGDETAIL_ROTATE_ENTITY_AXIS_Y, -PI/64, cube1->x_center, cube1->y_center, cube1->z_center);
+        broadcast_rotate(space, write_fds, 1, MSGDETAIL_ROTATE_ENTITY_AXIS_Z, -PI/64, cube1->x_center, cube1->y_center, cube1->z_center);
 
         capture_image(
             map,
