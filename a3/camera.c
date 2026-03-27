@@ -37,7 +37,7 @@ static ssize_t read_safely(
     while(nbytes_successful < num_bytes_wanted) {
         ssize_t nbytes_now = read(
             source_file_descriptor, 
-            source_buffer, 
+            source_buffer + nbytes_successful, 
             num_bytes_wanted);
 
         if(nbytes_now == 0) {
@@ -65,12 +65,14 @@ static ssize_t read_safely(
  * Returns -1 if something went wrong.
  * Returns the number of bytes written if not.
  */
-static ssize_t write_safely(int destination_file_descriptor,
+ssize_t write_safely(int destination_file_descriptor,
                             void *source_buffer, size_t num_bytes_wanted) {
     size_t nbytes_successful = 0;
     while (nbytes_successful < num_bytes_wanted) {
         ssize_t nbytes_now =
-            write(destination_file_descriptor, source_buffer, num_bytes_wanted);
+            write(destination_file_descriptor,
+                  source_buffer + nbytes_successful,
+                  num_bytes_wanted);
 
         // if (nbytes_now == 0) {
         //     // end of file reached
@@ -89,6 +91,7 @@ static ssize_t write_safely(int destination_file_descriptor,
     }
     return nbytes_successful;
 }
+
 
 void camera_worker_work(
         int worker_idx,
@@ -118,6 +121,8 @@ void camera_worker_work(
             // EOF, meaning the write end has been closed
             exit(0);
         }
+
+        // printf("Worker [%d] received header of type 0x%x\n", worker_idx, header.message_type);
 
         // do different things depending on the message type
         switch(header.message_type) {
@@ -158,6 +163,20 @@ void camera_worker_work(
             tasks_completed++;
 
             break;
+
+        case MSGTYPE_SPACE_UPDATE_TRANSLATE_ENTITY:
+            CameraWorkerSpaceUpdate_TranslateEntity details;
+            if (read_safely(fd_read, &details,
+                            sizeof(CameraWorkerSpaceUpdate_TranslateEntity)) <=
+                0) {
+                perror("read details of TranslateEntity update");
+                exit(1);
+            }
+            Entity *entity = get_entity(space, details.entity_id);
+            translate(entity, details.x_offset, details.y_offset,
+                      details.z_offset);
+            break;
+
         default:
             fprintf(stderr,
                     "Unhandled message type '%d' received by worker at index %d.\n",

@@ -6,7 +6,8 @@
 #include "renderer.h"
 
 #define MSGTYPE_RAYCAST_TASK 0x00
-#define MSGTYPE_GEOMETRY_UPDATE 0x01
+#define MSGTYPE_SPACE_UPDATE_TRANSLATE_ENTITY 0x10
+#define MSGTYPE_SPACE_UPDATE_ROTATE_ENTITY 0x11
 
 typedef struct {
     uint8_t message_type;
@@ -31,6 +32,13 @@ typedef struct {
     double distance;
 } CameraRaycastTaskResult;
 
+typedef struct {
+    int entity_id;
+    double x_offset;
+    double y_offset;
+    double z_offset;
+} CameraWorkerSpaceUpdate_TranslateEntity;
+
 void capture_image(
     DistanceMap *film,
     double horizontal_view_angle,
@@ -51,5 +59,7 @@ void spawn_camera_workers(
     int count,
     EntitySpace *space);
 
+ssize_t write_safely(int destination_file_descriptor, void *source_buffer,
+                     size_t num_bytes_wanted);
 
 #endif

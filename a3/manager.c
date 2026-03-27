@@ -14,6 +14,20 @@
 #define HORIZONTAL_VIEW_ANGLE (PI / 4)
 #define PIXEL_ASPECT_RATIO (11.0 / 21.0)
 
+
+static void broadcast_to_pipes(int *write_fds, void *source_buffer, size_t nbytes) {
+    for (int i = 0; i < NUM_WORKERS; i++) {
+
+        // printf("writing to [%d]\n", i);
+        
+        if (write_safely(write_fds[i], source_buffer, nbytes) <= 0) {
+            perror("write - broadcast");
+            exit(1);
+        }
+    }
+}
+
+
 int main() {
     
     // build the scene
@@ -31,14 +45,35 @@ int main() {
 
     // create the film to capture the image on
     DistanceMap *map = malloc(sizeof(DistanceMap));
-    map->width = 100;
-    map->height = 10;
+    map->width = 120;
+    map->height = 40;
     map->distances = malloc(sizeof(double) * map->width * map->height);
+
+    // repeatedly overwritten
+    CameraMessageHeader *header = malloc(sizeof(CameraMessageHeader));
+    CameraWorkerSpaceUpdate_TranslateEntity *details = malloc(sizeof(CameraWorkerSpaceUpdate_TranslateEntity));
 
     // render some stuff
     for (int i = 0; i < 60; i++) {
-        translate(cube1, 0, 0, -10./65);
-        rotate_z(cube1, PI/32, cube1->x_center, cube1->y_center, cube1->z_center);
+        /*
+            Assumption:
+            Between frames, the pipes used to write to the children
+            should be empty.
+            I don't know if this is always actually true.
+        */
+
+        // translate(cube1, 0, 0, -10./65);
+        header->message_type = MSGTYPE_SPACE_UPDATE_TRANSLATE_ENTITY;
+        // printf("%x!!!!\n", header->message_type);
+        details->entity_id = 1; // hardcoded temporarily
+        details->x_offset = 0;
+        details->y_offset = 0;
+        details->z_offset = -10/65.0;
+        broadcast_to_pipes(write_fds, header, sizeof(*header));
+        broadcast_to_pipes(write_fds, details, sizeof(*details));
+
+        rotate_z(cube1, PI / 32, cube1->x_center, cube1->y_center,
+                 cube1->z_center);
         rotate_x(cube1, PI/32, cube1->x_center, cube1->y_center, cube1->z_center);
         rotate_y(cube1, PI/32, cube1->x_center, cube1->y_center, cube1->z_center);
 
@@ -73,5 +108,3 @@ int main() {
 
     return 0;
 }
-
-
