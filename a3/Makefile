@@ -27,6 +27,9 @@ renderer.o: renderer.c renderer.h
 test_camera: test_camera.c camera.c raycast.c space.c renderer.c camera.h raycast.h space.h renderer.h
 	gcc -Wall -g -o test_camera test_camera.c camera.c raycast.c space.c renderer.c -lm
 
+manager: manager.c camera.c raycast.c space.c renderer.c camera.h raycast.h space.h renderer.h
+	gcc -Wall -g -o manager manager.c camera.c raycast.c space.c renderer.c -lm
+
 tags: *.c *.h
 	ctags **.c **.h
 

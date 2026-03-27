@@ -11,8 +11,6 @@
 #include "space.h"
 #define PI (3.14159265358979323846)
 
-#define NUM_WORKERS 8
-
 
 void normalise_vector_mutate(double *x, double *y, double *z) {
     double length = sqrt((*x)*(*x) + (*y)*(*y) + (*z)*(*z));
@@ -86,7 +84,7 @@ void camera_worker_work(
 }
 
 
-void camera_spawn_workers(
+void spawn_camera_workers(
         pid_t *worker_pids,
         int *pipe_read_fds,
         int *pipe_write_fds,
@@ -161,8 +159,10 @@ void capture_image(
         double camera_y,
         double camera_z,
         double camera_forward_azimuth,
-        double camera_forward_inclination) {
-
+        double camera_forward_inclination,
+        int *worker_read_fds,
+        int *worker_write_fds,
+        int num_workers) {
     if(film == NULL) {
         fprintf(stderr, "must provide nonnull distance map");
         exit(1);
@@ -186,12 +186,6 @@ void capture_image(
         camera_forward[2]*camera_upward[0]-camera_forward[0]*camera_upward[2],
         camera_forward[0]*camera_upward[1]-camera_forward[1]*camera_upward[0]
     };
-
-    pid_t pids[NUM_WORKERS];
-    int read_fds[NUM_WORKERS];
-    int write_fds[NUM_WORKERS];
-
-    camera_spawn_workers(pids, read_fds, write_fds, NUM_WORKERS, entities);
 
 
     int num_tasks = film->width * film->height;
@@ -284,8 +278,8 @@ void capture_image(
     max_read_fd = -1;
     max_write_fd = -1;
 
-    for (int i = 0; i < NUM_WORKERS; i++) {
-      if(write(write_fds[i],
+    for (int i = 0; i < num_workers; i++) {
+      if(write(worker_write_fds[i],
           task_list[task_list_head],
           sizeof(*task_list[task_list_head])) < 0) {
         perror("write");
@@ -300,14 +294,14 @@ void capture_image(
     while(tasks_completed < num_tasks) {
         // since select_*_fds gets modified by select,
         // we need to do this on every loop iteration
-        for (int i = 0; i < NUM_WORKERS; i++) {
-            FD_SET(read_fds[i], &select_read_fds);
-            if(read_fds[i] >= max_read_fd) {
-                max_read_fd = read_fds[i] + 1;
+        for (int i = 0; i < num_workers; i++) {
+            FD_SET(worker_read_fds[i], &select_read_fds);
+            if(worker_read_fds[i] >= max_read_fd) {
+                max_read_fd = worker_read_fds[i] + 1;
             }
-            FD_SET(write_fds[i], &select_write_fds);
-            if(write_fds[i] >= max_write_fd) {
-                max_write_fd = write_fds[i] + 1;
+            FD_SET(worker_write_fds[i], &select_write_fds);
+            if(worker_write_fds[i] >= max_write_fd) {
+                max_write_fd = worker_write_fds[i] + 1;
             }
         }
 
@@ -318,10 +312,10 @@ void capture_image(
             exit(1);
         }
 
-        for (int i = 0; i < NUM_WORKERS; i++) {
-            if(FD_ISSET(read_fds[i], &select_read_fds) != 0) {
+        for (int i = 0; i < num_workers; i++) {
+            if(FD_ISSET(worker_read_fds[i], &select_read_fds) != 0) {
                 // this one has something to read from
-                if(read(read_fds[i], &task_result,
+                if(read(worker_read_fds[i], &task_result,
                             sizeof(CameraRaycastTaskResult)) <= 0) {
                     perror("read");
                     exit(1);
@@ -334,14 +328,14 @@ void capture_image(
                 // printf("(%d, %d) Distance: %lf\n", task_result->image_x, task_result->image_y, task_result->distance);
                 // printf("received result for pixel (%d, %d)\n", task_result->image_x, task_result->image_y);
                 tasks_completed++;
-                if(FD_ISSET(write_fds[i], &select_write_fds) != 0) {
+                if(FD_ISSET(worker_write_fds[i], &select_write_fds) != 0) {
                 // this one is available for writing to
 
                   if(task_list_head >= num_tasks) {
                     break;
                   }
 
-                  if(write(write_fds[i],
+                  if(write(worker_write_fds[i],
                             task_list[task_list_head],
                             sizeof(*task_list[task_list_head])) < 0) {
                     perror("write");
@@ -353,22 +347,6 @@ void capture_image(
                 }
  
             }
-
-        }
-    }
-
-    for (int i = 0; i < NUM_WORKERS; i++) {
-        if (close(write_fds[i]) == -1) {
-            perror("close");
-            exit(1);
-        }
-    }
-
-    for (int i = 0; i < NUM_WORKERS; i++) {
-        int status;
-        if (wait(&status) == -1) {
-            perror("wait");
-            exit(1);
         }
     }
 
