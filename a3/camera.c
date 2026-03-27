@@ -1,3 +1,4 @@
+#include <errno.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <sys/select.h>
@@ -12,11 +13,81 @@
 #define PI (3.14159265358979323846)
 
 
-void normalise_vector_mutate(double *x, double *y, double *z) {
+static void normalise_vector_mutate(double *x, double *y, double *z) {
     double length = sqrt((*x)*(*x) + (*y)*(*y) + (*z)*(*z));
     *x /= length;
     *y /= length;
     *z /= length;
+}
+
+/**
+ * According to the man page on `read`, it sometimes doesn't read everything you
+ * told it to read, even if the data is there and readable. This function is
+ * supposed to prevent this funniness.
+ *
+ * Returns 0 if read was successful (num_bytes_wanted were read, or EOF was
+ * reached). Returns 1 if something went wrong.
+ */
+static int read_safely(
+        int source_file_descriptor,
+        void *source_buffer,
+        size_t num_bytes_wanted) {
+    size_t nbytes_successful = 0;
+    while(nbytes_successful < num_bytes_wanted) {
+        ssize_t nbytes_now = read(
+            source_file_descriptor, 
+            source_buffer, 
+            num_bytes_wanted);
+
+        if(nbytes_now == 0) {
+            // end of file reached
+            return 0;
+        }
+        if(nbytes_now < 0) {
+            if(errno == EINTR) {
+                // interrupted by a signal
+                // see `man 2 read` and `man 7 signal`
+                continue; // keep trying to read more bytes
+            }
+            return -1; // give up
+        }
+
+        nbytes_successful += nbytes_now;
+    }
+    return 0;
+}
+
+/**
+ * Prevent funny business with `write` not writing the whole thing even though
+ * there's space because of a signal interrupt or something.
+ *
+ * Returns 0 if write was successful (num_bytes_wanted were written). Returns 1
+ * if something went wrong.
+ */
+static int write_safely(int destination_file_descriptor,
+                        void *source_buffer,
+                        size_t num_bytes_wanted) {
+    size_t nbytes_successful = 0;
+    while (nbytes_successful < num_bytes_wanted) {
+        ssize_t nbytes_now =
+            write(destination_file_descriptor, source_buffer, num_bytes_wanted);
+
+        // if (nbytes_now == 0) {
+        //     // end of file reached
+        //     return 0;
+        // }
+        if (nbytes_now < 0) {
+            if (errno == EINTR) {
+                // interrupted by a signal
+                // see `man 2 write` and `man 7 signal`
+                continue; // keep trying to write more bytes
+            }
+            return -1; // give up
+        }
+
+        nbytes_successful += nbytes_now;
+    }
+    return 0;
 }
 
 
@@ -26,50 +97,71 @@ void camera_worker_work(
         int fd_write,
         Entity *collidable_entities) {
 
-    // overwritten repeatedly to store the current task & result
+    // overwritten repeatedly to store stuff that is read in from the pipe
+    CameraMessageHeader header;
     CameraRaycastTask task;
     CameraRaycastTaskResult result;
 
 
     int tasks_completed = 0;
-    int read_res;
-    while((read_res = read(fd_read, &task, sizeof(CameraRaycastTask))) > 0) {
-        double pos[3] = {
-            task.ray_origin_x,
-            task.ray_origin_y,
-            task.ray_origin_z
-        };
-        // printf("parameters to shoot_ray: pos=(%lf,%lf,%lf),azim=%lf,incl=%lf",
-        //         pos[0], pos[1], pos[2], task.ray_azimuth, task.ray_inclination);
+    while(1) {
+        int read_result;
 
-        normalise_vector_mutate(
-                &task.ray_direction_x,
-                &task.ray_direction_y,
-                &task.ray_direction_z
-        );
-        double distance = shoot_ray(
-                pos,
-                task.ray_direction_x,
-                task.ray_direction_y,
-                task.ray_direction_z,
-                collidable_entities
-        );
-
-        // printf("[%d] Distance: %lf\n", worker_idx, distance);
-        result.image_x = task.image_x;
-        result.image_y = task.image_y;
-        result.distance = distance;
-        if(write(fd_write, &result, sizeof(result)) <= 0) {
-            perror("child write");
+        // try to read the header for a message.
+        // This should block until there is actually something to read.
+        read_result =
+            read_safely(fd_read, &header, sizeof(CameraMessageHeader));
+        if (read_result == -1) {
+            perror("read");
             exit(1);
         }
-        // printf("child wrote result for pixel (%d, %d)\n", result->image_x, result->image_y);
 
-        tasks_completed++;
-    }
-    if (read_res == -1) {
-        perror("read");
-        exit(1);
+        // do different things depending on the message type
+        switch(header.message_type) {
+
+        case MSGTYPE_TASK:
+            read_result =
+                read_safely(fd_read, &task, sizeof(CameraRaycastTask));
+            if (read_result == -1) {
+                perror("read");
+                exit(1);
+            }
+
+            double pos[3] = {task.ray_origin_x, task.ray_origin_y,
+                             task.ray_origin_z};
+            // printf("parameters to shoot_ray:
+            // pos=(%lf,%lf,%lf),azim=%lf,incl=%lf",
+            //         pos[0], pos[1], pos[2], task.ray_azimuth,
+            //         task.ray_inclination);
+
+            normalise_vector_mutate(&task.ray_direction_x,
+                                    &task.ray_direction_y,
+                                    &task.ray_direction_z);
+            double distance =
+                shoot_ray(pos, task.ray_direction_x, task.ray_direction_y,
+                          task.ray_direction_z, collidable_entities);
+
+            // printf("[%d] Distance: %lf\n", worker_idx, distance);
+            result.image_x = task.image_x;
+            result.image_y = task.image_y;
+            result.distance = distance;
+            if (write(fd_write, &result, sizeof(result)) <= 0) {
+                perror("child write");
+                exit(1);
+            }
+            // printf("child wrote result for pixel (%d, %d)\n",
+            // result->image_x, result->image_y);
+
+            tasks_completed++;
+
+            break;
+        default:
+            fprintf(stderr,
+                    "Unhandled message type '%d' received by worker at index %d.\n",
+                    header.message_type, worker_idx);
+            exit(1);
+
+        }
     }
     if (close(fd_read) == -1) {
         perror("close");
@@ -269,7 +361,10 @@ void capture_image(
     int tasks_completed = 0;
     CameraRaycastTaskResult task_result; // repeatedly overwritten
 
-
+    
+    /////////////////////////////////
+    // assign tasks to the workers //
+    
     int max_read_fd, max_write_fd;
     fd_set select_read_fds;
     fd_set select_write_fds;
@@ -278,18 +373,27 @@ void capture_image(
     max_read_fd = -1;
     max_write_fd = -1;
 
-    for (int i = 0; i < num_workers; i++) {
-      if(write(worker_write_fds[i],
-          task_list[task_list_head],
-          sizeof(*task_list[task_list_head])) < 0) {
-        perror("write");
-        exit(1);
-      }
-    // printf("sent task to worker at index %d\n", i);
-      task_list_head++;
-      tasks_assigned++;
-    }
+    // we can send the same header with each task.
+    CameraMessageHeader *task_header = malloc(sizeof(CameraMessageHeader));
+    task_header->message_type = MSGTYPE_TASK;
 
+    // send out an initial batch of tasks -- one each
+    for (int i = 0; i < num_workers; i++) {
+        // write the header that indicates an incoming task
+        if (write_safely(worker_write_fds[i], task_header, sizeof(*task_header)) < 0) {
+            perror("write");
+            exit(1);
+        }
+        // write the actual task itself to the pipe
+        if (write_safely(worker_write_fds[i], task_list[task_list_head],
+                         sizeof(*task_list[task_list_head])) < 0) {
+            perror("write");
+            exit(1);
+        }
+        // printf("sent task to worker at index %d\n", i);
+        task_list_head++;
+        tasks_assigned++;
+    }
 
     while(tasks_completed < num_tasks) {
         // since select_*_fds gets modified by select,
@@ -314,9 +418,10 @@ void capture_image(
 
         for (int i = 0; i < num_workers; i++) {
             if(FD_ISSET(worker_read_fds[i], &select_read_fds) != 0) {
-                // this one has something to read from
-                if(read(worker_read_fds[i], &task_result,
-                            sizeof(CameraRaycastTaskResult)) <= 0) {
+                // THIS PIPE HAS SOMETHING FOR US TO READ
+
+                if(read_safely(worker_read_fds[i], &task_result,
+                            sizeof(CameraRaycastTaskResult)) < 0) {
                     perror("read");
                     exit(1);
                 }
@@ -328,28 +433,39 @@ void capture_image(
                 // printf("(%d, %d) Distance: %lf\n", task_result->image_x, task_result->image_y, task_result->distance);
                 // printf("received result for pixel (%d, %d)\n", task_result->image_x, task_result->image_y);
                 tasks_completed++;
+
                 if(FD_ISSET(worker_write_fds[i], &select_write_fds) != 0) {
-                // this one is available for writing to
+                    // THIS PIPE IS AVAILABLE FOR WRITING TO
 
-                  if(task_list_head >= num_tasks) {
-                    break;
-                  }
+                    if (task_list_head >= num_tasks) {
+                        // if there are no more tasks to write
+                        break;
+                    }
 
-                  if(write(worker_write_fds[i],
-                            task_list[task_list_head],
-                            sizeof(*task_list[task_list_head])) < 0) {
-                    perror("write");
-                    exit(1);
-                  }
-                // printf("sent task to worker at index %d\n", i);
-                  task_list_head++;
-                  tasks_assigned++;
+                    // write a header to indicate that a task is incoming
+                    if (write_safely(worker_write_fds[i], task_header,
+                                     sizeof(*task_header)) < 0) {
+                        perror("write");
+                        exit(1);
+                    }
+                    // write the task itself
+                    if (write_safely(worker_write_fds[i], 
+                              task_list[task_list_head],
+                              sizeof(*task_list[task_list_head])) < 0) {
+                        perror("write");
+                        exit(1);
+                    }
+
+                    // printf("sent task to worker at index %d\n", i);
+                    task_list_head++;
+                    tasks_assigned++;
                 }
  
             }
         }
     }
 
+    free(task_header);
 
     // end time
     gettimeofday(&stop, NULL);
