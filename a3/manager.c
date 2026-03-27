@@ -51,7 +51,8 @@ int main() {
 
     // repeatedly overwritten
     CameraMessageHeader *header = malloc(sizeof(CameraMessageHeader));
-    CameraWorkerSpaceUpdate_TranslateEntity *details = malloc(sizeof(CameraWorkerSpaceUpdate_TranslateEntity));
+    CameraWorkerSpaceUpdate_TranslateEntity *translation_details = malloc(sizeof(CameraWorkerSpaceUpdate_TranslateEntity));
+    CameraWorkerSpaceUpdate_RotateEntity *rotation_details = malloc(sizeof(CameraWorkerSpaceUpdate_RotateEntity));
 
     // render some stuff
     for (int i = 0; i < 60; i++) {
@@ -62,19 +63,55 @@ int main() {
             I don't know if this is always actually true.
         */
 
-        // translate(cube1, 0, 0, -10./65);
         header->message_type = MSGTYPE_SPACE_UPDATE_TRANSLATE_ENTITY;
-        // printf("%x!!!!\n", header->message_type);
-        details->entity_id = 1; // hardcoded temporarily
-        details->x_offset = 0;
-        details->y_offset = 0;
-        details->z_offset = -10/65.0;
+        translation_details->entity_id = 1; // hardcoded temporarily
+        translation_details->x_offset = 0;
+        translation_details->y_offset = 0;
+        translation_details->z_offset = -10/65.0;
         broadcast_to_pipes(write_fds, header, sizeof(*header));
-        broadcast_to_pipes(write_fds, details, sizeof(*details));
+        broadcast_to_pipes(write_fds, translation_details, sizeof(*translation_details));
+        translate(cube1, 0, 0, -10./65);
 
+        
+        header->message_type = MSGTYPE_SPACE_UPDATE_ROTATE_ENTITY;
+        
+        
+        rotation_details->axis_of_rotation = MSGDETAIL_ROTATE_ENTITY_AXIS_Z;
+        rotation_details->entity_id = 1;
+        rotation_details->angle = PI / 32;
+        rotation_details->x_center = cube1->x_center;
+        rotation_details->y_center = cube1->y_center;
+        rotation_details->z_center = cube1->z_center;
+
+        broadcast_to_pipes(write_fds, header, sizeof(*header));
+        broadcast_to_pipes(write_fds, rotation_details,
+            sizeof(*rotation_details));
         rotate_z(cube1, PI / 32, cube1->x_center, cube1->y_center,
-                 cube1->z_center);
-        rotate_x(cube1, PI/32, cube1->x_center, cube1->y_center, cube1->z_center);
+                    cube1->z_center);
+
+        rotation_details->axis_of_rotation = MSGDETAIL_ROTATE_ENTITY_AXIS_X;
+        rotation_details->entity_id = 1;
+        rotation_details->angle = PI / 32;
+        rotation_details->x_center = cube1->x_center;
+        rotation_details->y_center = cube1->y_center;
+        rotation_details->z_center = cube1->z_center;
+
+        broadcast_to_pipes(write_fds, header, sizeof(*header));
+        broadcast_to_pipes(write_fds, rotation_details,
+            sizeof(*rotation_details));
+            rotate_x(cube1, PI / 32, cube1->x_center, cube1->y_center,
+                     cube1->z_center);
+
+        rotation_details->axis_of_rotation = MSGDETAIL_ROTATE_ENTITY_AXIS_Y;
+        rotation_details->entity_id = 1;
+        rotation_details->angle = PI / 32;
+        rotation_details->x_center = cube1->x_center;
+        rotation_details->y_center = cube1->y_center;
+        rotation_details->z_center = cube1->z_center;
+        
+        broadcast_to_pipes(write_fds, header, sizeof(*header));
+        broadcast_to_pipes(write_fds, rotation_details,
+            sizeof(*rotation_details));
         rotate_y(cube1, PI/32, cube1->x_center, cube1->y_center, cube1->z_center);
 
         capture_image(

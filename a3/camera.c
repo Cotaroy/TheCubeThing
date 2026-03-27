@@ -176,6 +176,32 @@ void camera_worker_work(
             translate(entity, details.x_offset, details.y_offset,
                       details.z_offset);
             break;
+        
+        case MSGTYPE_SPACE_UPDATE_ROTATE_ENTITY: {
+            CameraWorkerSpaceUpdate_RotateEntity details;
+            if(read_safely(fd_read, &details, sizeof(CameraWorkerSpaceUpdate_RotateEntity)) <= 0) {
+                perror("read details of RotateEntity update");
+                exit(1);
+            }
+            Entity *entity = get_entity(space, details.entity_id);
+
+            switch (details.axis_of_rotation) {
+                case MSGDETAIL_ROTATE_ENTITY_AXIS_X:
+                    rotate_x(entity, details.angle, details.x_center, details.y_center, details.z_center);    
+                    break;
+                case MSGDETAIL_ROTATE_ENTITY_AXIS_Y:
+                    rotate_y(entity, details.angle, details.x_center, details.y_center, details.z_center);    
+                    break;
+                case MSGDETAIL_ROTATE_ENTITY_AXIS_Z:
+                    rotate_z(entity, details.angle, details.x_center, details.y_center, details.z_center);    
+                    break;
+                default:
+                    fprintf(stderr, "Unknown rotation axis 0x%x.",
+                            details.axis_of_rotation);
+                    exit(1);
+            }
+            break;
+        }
 
         default:
             fprintf(stderr,

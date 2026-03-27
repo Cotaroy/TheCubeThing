@@ -9,6 +9,10 @@
 #define MSGTYPE_SPACE_UPDATE_TRANSLATE_ENTITY 0x10
 #define MSGTYPE_SPACE_UPDATE_ROTATE_ENTITY 0x11
 
+#define MSGDETAIL_ROTATE_ENTITY_AXIS_X 0x00
+#define MSGDETAIL_ROTATE_ENTITY_AXIS_Y 0x01
+#define MSGDETAIL_ROTATE_ENTITY_AXIS_Z 0x02
+
 typedef struct {
     uint8_t message_type;
     uint32_t length; // number of bytes that come after this header
@@ -38,6 +42,16 @@ typedef struct {
     double y_offset;
     double z_offset;
 } CameraWorkerSpaceUpdate_TranslateEntity;
+
+typedef struct {
+    int entity_id;
+    uint8_t axis_of_rotation;
+    double angle;
+    double x_center;
+    double y_center;
+    double z_center;
+} CameraWorkerSpaceUpdate_RotateEntity;
+
 
 void capture_image(
     DistanceMap *film,
