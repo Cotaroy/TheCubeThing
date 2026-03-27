@@ -1,8 +1,18 @@
 #ifndef CAMERA_H
 #define CAMERA_H
 
+#include <stdint.h>
 #include "space.h"
 #include "renderer.h"
+
+#define MSGTYPE_TASK 0x00
+#define MSGTYPE_GEOMETRY_UPDATE 0x01
+
+typedef struct {
+    uint8_t message_type;
+    uint32_t length; // number of bytes that come after this header
+                     // only used for variable-width message types
+} MessageHeader;
 
 typedef struct {
     int image_x;
@@ -41,5 +51,6 @@ void spawn_camera_workers(
     int *pipe_write_fds,
     int count,
     Entity *collidable_entities);
-        
+
+
 #endif
