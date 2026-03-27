@@ -24,6 +24,26 @@ char get_pixel_char(double distance) {
     return hierarchy[tier];
 }
 
+char get_pixel_char_light(double luminosity) {
+    if (luminosity < MIN_LIGHT) {
+        luminosity = MIN_LIGHT;
+    }
+    else if(luminosity > MAX_LIGHT) {
+        luminosity = MAX_LIGHT;
+    }
+    double num_tiers = 69.;
+
+    double tier_step = (MAX_LIGHT - MIN_LIGHT) / (num_tiers + 1);
+    int tier = luminosity / tier_step;
+    if (68 - tier < 0 ) {
+        return hierarchy[0];
+    }
+    // printf("Returning with tier %d = %f / (10/7)\n", 68 - tier, luminosity);
+
+    // printf("%f corresponds to character '%c', with tier: %d\n", distance, hierarchy[tier], tier);
+    return hierarchy[68 - tier];
+}
+
 void render(DistanceMap *map) {
     int width = map->width;
     int height = map->height;
@@ -40,23 +60,19 @@ void render(DistanceMap *map) {
     }
 }
 
-// void render(DistanceMap *map) {
-//     int width = map->width;
-//     int height = map->height;
-//     double *distances = map->distances;
-//
-//     for(int y = 0; y < height; y++) {
-//         for(int x = 0; x < width; x++) {
-//             int idx = y * width + x;
-//             double dist = distances[idx];
-//
-//             printf("%.1lf ", dist);
-//
-//             // if(dist > 32) printf(" ");
-//             // else if(dist > 4) printf("*");
-//             // else if(dist > 0) printf("#");
-//             // else printf("@");
-//         }
-//         printf("\n");
-//     }
-// }
+void render_luminosity(DistanceMap *map) {
+    int width = map->width;
+    int height = map->height;
+    double *luminosity = map->distances;
+
+    for(int y = 0; y < height; y++) {
+        for(int x = 0; x < width; x++) {
+            int idx = y * width + x;
+            double lum = luminosity[idx];
+
+            printf("%c", get_pixel_char_light(lum));
+        }
+        printf("\n");
+    }
+}
+
