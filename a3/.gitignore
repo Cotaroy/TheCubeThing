@@ -9,6 +9,7 @@ test_space
 test_raycast
 test_renderer
 test_camera
+manager
 
 # latex debris
 report/*.pdf
