@@ -32,7 +32,6 @@ typedef struct {
 } CameraRaycastTaskResult;
 
 void capture_image(
-    Entity *entities,
     DistanceMap *film,
     double horizontal_view_angle,
     double pixel_aspect_ratio,
@@ -50,7 +49,7 @@ void spawn_camera_workers(
     int *pipe_read_fds,
     int *pipe_write_fds,
     int count,
-    Entity *collidable_entities);
+    EntitySpace *space);
 
 
 #endif

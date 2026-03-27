@@ -17,16 +17,17 @@
 int main() {
     
     // build the scene
-    Entity *cube = create_rectangle(NULL, -.5, -.5, -.5, 1, 1, 1);
-    Entity *cube2 = create_rectangle(cube, -100, -100, 100, 200, 200, 1);
-
-    Entity *entity_linked_list = cube2; // less confusing variable name
+    EntitySpace *space = create_space();
+    Entity *cube1 = create_rectangle(-.5, -.5, -.5, 1, 1, 1);
+    Entity *cube2 = create_rectangle(-100, -100, 100, 200, 200, 1);
+    add_to_entity_space(space, cube1, 1);
+    add_to_entity_space(space, cube2, 2);
 
     // spawn the workers
     pid_t pids[NUM_WORKERS];
     int read_fds[NUM_WORKERS];
     int write_fds[NUM_WORKERS];
-    spawn_camera_workers(pids, read_fds, write_fds, NUM_WORKERS, entity_linked_list);
+    spawn_camera_workers(pids, read_fds, write_fds, NUM_WORKERS, space);
 
     // create the film to capture the image on
     DistanceMap *map = malloc(sizeof(DistanceMap));
@@ -36,13 +37,12 @@ int main() {
 
     // render some stuff
     for (int i = 0; i < 60; i++) {
-        translate(cube, 0, 0, -10./65);
-        rotate_z(cube, PI/32, cube->x_center, cube->y_center, cube->z_center);
-        rotate_x(cube, PI/32, cube->x_center, cube->y_center, cube->z_center);
-        rotate_y(cube, PI/32, cube->x_center, cube->y_center, cube->z_center);
+        translate(cube1, 0, 0, -10./65);
+        rotate_z(cube1, PI/32, cube1->x_center, cube1->y_center, cube1->z_center);
+        rotate_x(cube1, PI/32, cube1->x_center, cube1->y_center, cube1->z_center);
+        rotate_y(cube1, PI/32, cube1->x_center, cube1->y_center, cube1->z_center);
 
         capture_image(
-            entity_linked_list,
             map,
             HORIZONTAL_VIEW_ANGLE, // horizontal view angle
             PIXEL_ASPECT_RATIO,
@@ -69,7 +69,7 @@ int main() {
 
     free(map->distances);
     free(map);
-    free_all_entities(entity_linked_list);
+    free_space(space);
 
     return 0;
 }

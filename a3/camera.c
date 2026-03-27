@@ -95,7 +95,7 @@ void camera_worker_work(
         int worker_idx,
         int fd_read,
         int fd_write,
-        Entity *collidable_entities) {
+        EntitySpace *space) {
 
     // overwritten repeatedly to store stuff that is read in from the pipe
     CameraMessageHeader header;
@@ -139,7 +139,7 @@ void camera_worker_work(
                                     &task.ray_direction_z);
             double distance =
                 shoot_ray(pos, task.ray_direction_x, task.ray_direction_y,
-                          task.ray_direction_z, collidable_entities);
+                          task.ray_direction_z, space);
 
             // printf("[%d] Distance: %lf\n", worker_idx, distance);
             result.image_x = task.image_x;
@@ -181,7 +181,7 @@ void spawn_camera_workers(
         int *pipe_read_fds,
         int *pipe_write_fds,
         int count,
-        Entity *collidable_entities) {
+        EntitySpace *space) {
 
     int parent_to_child_pipe[2];
     int child_to_parent_pipe[2];
@@ -202,7 +202,7 @@ void spawn_camera_workers(
             close(child_to_parent_pipe[0]);
             camera_worker_work(i, parent_to_child_pipe[0],
                                child_to_parent_pipe[1],
-                               collidable_entities);
+                               space);
             // Should exit from inside this function (never return)
             // but just in case
             fprintf(stderr, "child escaped work");
@@ -243,7 +243,6 @@ void spawn_camera_workers(
  *   nonsquare pixel displays to prevent the image from looking stretched.
  */
 void capture_image(
-        Entity *entities,
         DistanceMap *film,
         double horizontal_view_angle,
         double pixel_aspect_ratio,
