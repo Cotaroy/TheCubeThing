@@ -35,16 +35,20 @@ Entity *create_entity(Triangle *object) {
   return new_entity;
 }
 
-Vertex *create_vertex(double *coordinate) {
+LightSource *create_light_source(double x, double y, double z, double intensity) {
+    LightSource *source = malloc(sizeof(LightSource));
+    source->x = x; source->y = y; source->z = z; source->intensity = intensity;
+    return source;
+}
 
-  Vertex *new_vertex = malloc(sizeof(Vertex));
-  if (new_vertex == NULL) {
-    die("malloc");
-  }
-  new_vertex->coordinate = coordinate;
-  new_vertex->next = NULL;
+void translate_light(LightSource *light_source, double x, double y, double z) {
+    light_source->x += x;
+    light_source->y += y;
+    light_source->z += z;
+}
 
-  return new_vertex;
+void brighten(LightSource *light_source, double delta_intensity) {
+    light_source->intensity += delta_intensity;
 }
 
 Entity *create_rectangle(double x, double y, double z, double x_length, double y_length, double z_length) {
@@ -410,6 +414,12 @@ void free_space(EntitySpace *entities) {
         free_entity(entity_list[i]);
         entity_list[i] = NULL;
     }
+    for (int i = 0; i < MAX_LIGHTS; i++) {
+        free(entities->light_sources[i]);
+        entities->light_sources[i] = NULL;
+    }
+    free(entities);
+    entities = NULL;
 }
 
 void add_to_entity_space(EntitySpace *space, Entity *entity, int id) {
@@ -421,6 +431,15 @@ void delete_from_entity_space(EntitySpace *space, Entity *entity, int id) {
     space->entity_list[id] = NULL;
 }
 
+void add_light_to_entity_space(EntitySpace *space, LightSource *entity, int id) {
+    space->light_sources[id] = entity;
+}
+
+void delete_light_from_entity_space(EntitySpace *space, LightSource *entity, int id) {
+    free(space->light_sources[id]);
+    space->light_sources[id] = NULL;
+}
+
 Triangle *get_object(EntitySpace *space, int id) {
     if (space->entity_list[id] == NULL) {
         return NULL;
@@ -428,4 +447,12 @@ Triangle *get_object(EntitySpace *space, int id) {
 
     return space->entity_list[id]->object;
 
+}
+
+Entity *get_entity(EntitySpace *space, int id) {
+    return space->entity_list[id];
+}
+
+LightSource *get_light(EntitySpace *space, int id) {
+    return space->light_sources[id];
 }
