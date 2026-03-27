@@ -1,0 +1,3 @@
+* text=auto eol=lf
+# https://git-scm.com/docs/gitattributes#_eol
+# please please please stop changing my line endings from LF to CRLF every time i use vscode
