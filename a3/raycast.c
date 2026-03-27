@@ -165,7 +165,7 @@ double shoot_light_ray(double *pos, double x_vector, double y_vector, double z_v
         }
     }
     
-    if (min_distance == INFINITY || min_intersection_point[0] == INFINITY) {
+    if (min_distance == INFINITY) {
         return 0;
     }
 
@@ -176,10 +176,16 @@ double shoot_light_ray(double *pos, double x_vector, double y_vector, double z_v
         if (source == NULL) {
             continue;
         }
+        
+        double to_light[3];
+        double to_light_normalized[3];
+        to_light[0] = source->x - min_intersection_point[0];
+        to_light[1] = source->y - min_intersection_point[1];
+        to_light[2] = source->z - min_intersection_point[2];
 
-        double x_to_light = source->x - min_intersection_point[0];
-        double y_to_light = source->y - min_intersection_point[1];
-        double z_to_light = source->z - min_intersection_point[2];
+        double distance_squared = to_light[0] * to_light[0] + to_light[1] * to_light[1] + to_light[2] * to_light[2];
+        
+        normalize(to_light_normalized, to_light);
 
         int obstructed = 0;
 
@@ -187,9 +193,10 @@ double shoot_light_ray(double *pos, double x_vector, double y_vector, double z_v
             Triangle *curr_triangle = get_object(space, j);
             while (curr_triangle != NULL) {
 
-                double distance = get_distance(pos, x_to_light, y_to_light, z_to_light, curr_triangle, NULL);
+                double distance = get_distance(min_intersection_point, to_light_normalized[0], to_light_normalized[1], to_light_normalized[2], curr_triangle, NULL);
 
-                if (distance != INFINITY) {
+                if (distance != INFINITY && distance > 0.01 && distance_squared > distance * distance) {
+                    // printf("Obstructed: %f^2 < %f\n", distance, distance_squared);
                     obstructed = 1;
                     break;
                 }
@@ -199,10 +206,9 @@ double shoot_light_ray(double *pos, double x_vector, double y_vector, double z_v
         }
 
         if (obstructed == 0) {
-            double distance_squared = x_to_light * x_to_light + y_to_light * y_to_light + z_to_light * z_to_light;
             total_intensity += source->intensity / distance_squared;
         }
     }
 
-    return total_intensity / (min_distance * min_distance);
+    return total_intensity;
 }

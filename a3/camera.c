@@ -146,7 +146,7 @@ void camera_worker_work(
                                     &task.ray_direction_y,
                                     &task.ray_direction_z);
             double distance =
-                shoot_ray(pos, task.ray_direction_x, task.ray_direction_y,
+                shoot_light_ray(pos, task.ray_direction_x, task.ray_direction_y,
                           task.ray_direction_z, space);
 
             // printf("[%d] Distance: %lf\n", worker_idx, distance);

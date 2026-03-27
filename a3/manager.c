@@ -73,6 +73,10 @@ int main() {
     EntitySpace *space = create_space();
     Entity *cube1 = create_rectangle(-.5, -.5, -.5, 1, 1, 1);
     Entity *cube2 = create_rectangle(-100, -100, 100, 200, 200, 1);
+    LightSource *source = create_light_source(-3, 0, -5, 1000);
+    // LightSource *source2 = create_light_source(-3, -3, -3, 1000);
+    add_light_to_entity_space(space, source, 0);
+    // add_light_to_entity_space(space, source2, 1);
     add_to_entity_space(space, cube1, 1);
     add_to_entity_space(space, cube2, 2);
 
@@ -97,7 +101,7 @@ int main() {
             I don't know if this is always actually true.
         */
 
-        broadcast_translate(space,write_fds, 1, 0, 0, -10/65.0);
+        // broadcast_translate(space,write_fds, 1, 0, 0, -10/65.0);
         broadcast_rotate(space, write_fds, 1, MSGDETAIL_ROTATE_ENTITY_AXIS_X, PI/32, cube1->x_center, cube1->y_center, cube1->z_center);
         broadcast_rotate(space, write_fds, 1, MSGDETAIL_ROTATE_ENTITY_AXIS_Y, PI/32, cube1->x_center, cube1->y_center, cube1->z_center);
         broadcast_rotate(space, write_fds, 1, MSGDETAIL_ROTATE_ENTITY_AXIS_Z, PI/32, cube1->x_center, cube1->y_center, cube1->z_center);
@@ -109,7 +113,7 @@ int main() {
             0, 0, -10, // camera position
             0, 0,      // camera rotation
             read_fds, write_fds, NUM_WORKERS);
-        render(map);
+        render_luminosity(map);
     }
 
     // close the pipes and dispose of the children
