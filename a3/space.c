@@ -426,7 +426,7 @@ void add_to_entity_space(EntitySpace *space, Entity *entity, int id) {
     space->entity_list[id] = entity;
 }
 
-void delete_from_entity_space(EntitySpace *space, Entity *entity, int id) {
+void delete_from_entity_space(EntitySpace *space, int id) {
     free_entity(space->entity_list[id]);
     space->entity_list[id] = NULL;
 }
@@ -435,7 +435,7 @@ void add_light_to_entity_space(EntitySpace *space, LightSource *entity, int id) 
     space->light_sources[id] = entity;
 }
 
-void delete_light_from_entity_space(EntitySpace *space, LightSource *entity, int id) {
+void delete_light_from_entity_space(EntitySpace *space, int id) {
     free(space->light_sources[id]);
     space->light_sources[id] = NULL;
 }

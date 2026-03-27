@@ -33,9 +33,9 @@ typedef struct entity_space {
 // EntitySpace functions
 EntitySpace *create_space();
 void add_to_entity_space(EntitySpace *space, Entity *entity, int id);
-void remove_from_entity_space(EntitySpace *space, Entity *entity, int id);
+void delete_from_entity_space(EntitySpace *space, int id);
 void add_light_to_entity_space(EntitySpace *space, LightSource *entity, int id);
-void remove_light_from_entity_space(EntitySpace *space, Entity *entity, int id);
+void delete_light_from_entity_space(EntitySpace *space, int id);
 Triangle *get_object(EntitySpace *space, int id);
 Entity *get_entity(EntitySpace *space, int id);
 LightSource *get_light(EntitySpace *space, int id);
