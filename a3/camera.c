@@ -25,10 +25,11 @@ static void normalise_vector_mutate(double *x, double *y, double *z) {
  * told it to read, even if the data is there and readable. This function is
  * supposed to prevent this funniness.
  *
- * Returns 0 if read was successful (num_bytes_wanted were read, or EOF was
- * reached). Returns 1 if something went wrong.
+ * Returns -1 if something went wrong.
+ * Returns the number of bytes read if not.
+ * A return value of 0 indicates EOF.
  */
-static int read_safely(
+static ssize_t read_safely(
         int source_file_descriptor,
         void *source_buffer,
         size_t num_bytes_wanted) {
@@ -54,19 +55,18 @@ static int read_safely(
 
         nbytes_successful += nbytes_now;
     }
-    return 0;
+    return nbytes_successful;
 }
 
 /**
  * Prevent funny business with `write` not writing the whole thing even though
  * there's space because of a signal interrupt or something.
  *
- * Returns 0 if write was successful (num_bytes_wanted were written). Returns 1
- * if something went wrong.
+ * Returns -1 if something went wrong.
+ * Returns the number of bytes written if not.
  */
-static int write_safely(int destination_file_descriptor,
-                        void *source_buffer,
-                        size_t num_bytes_wanted) {
+static ssize_t write_safely(int destination_file_descriptor,
+                            void *source_buffer, size_t num_bytes_wanted) {
     size_t nbytes_successful = 0;
     while (nbytes_successful < num_bytes_wanted) {
         ssize_t nbytes_now =
@@ -87,9 +87,8 @@ static int write_safely(int destination_file_descriptor,
 
         nbytes_successful += nbytes_now;
     }
-    return 0;
+    return nbytes_successful;
 }
-
 
 void camera_worker_work(
         int worker_idx,
@@ -115,11 +114,15 @@ void camera_worker_work(
             perror("read");
             exit(1);
         }
+        if (read_result == 0) {
+            // EOF, meaning the write end has been closed
+            exit(0);
+        }
 
         // do different things depending on the message type
         switch(header.message_type) {
 
-        case MSGTYPE_TASK:
+        case MSGTYPE_RAYCAST_TASK:
             read_result =
                 read_safely(fd_read, &task, sizeof(CameraRaycastTask));
             if (read_result == -1) {
@@ -374,7 +377,7 @@ void capture_image(
 
     // we can send the same header with each task.
     CameraMessageHeader *task_header = malloc(sizeof(CameraMessageHeader));
-    task_header->message_type = MSGTYPE_TASK;
+    task_header->message_type = MSGTYPE_RAYCAST_TASK;
 
     // send out an initial batch of tasks -- one each
     for (int i = 0; i < num_workers; i++) {

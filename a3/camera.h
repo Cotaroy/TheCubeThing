@@ -5,7 +5,7 @@
 #include "space.h"
 #include "renderer.h"
 
-#define MSGTYPE_TASK 0x00
+#define MSGTYPE_RAYCAST_TASK 0x00
 #define MSGTYPE_GEOMETRY_UPDATE 0x01
 
 typedef struct {
