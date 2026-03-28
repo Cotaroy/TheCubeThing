@@ -9,8 +9,8 @@ void normalize(double *result, double *vector);
 
 // assume that x,y,z vectors are normalized
 // return INFINITY if there is no intersection or if intersection is behind the source
-// intersection argument is just for if you want the location of the intersection to be returned, NULL if no interssection
-double get_distance(double *pos, double x_vector, double y_vector, double z_vector, Triangle *triangle, double *intersection);
+// intersection argument is just for if you want the location of the intersection to be returned, NULL if no interssection, same with unit_normal
+double get_distance(double *pos, double x_vector, double y_vector, double z_vector, Triangle *triangle, double *intersection, double *unit_normal);
 // return INFINITY if there is no intersection or if intersection is behind the source
 double shoot_ray(double *pos, double x_vector, double y_vector, double z_vector, EntitySpace *space);
 
