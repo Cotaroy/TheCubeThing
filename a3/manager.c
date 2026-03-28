@@ -1,4 +1,5 @@
 #include <math.h>
+#include <signal.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <sys/wait.h>
@@ -67,8 +68,22 @@ static void broadcast_rotate(EntitySpace *space, int *write_fds, int entity_id, 
     }
 }
 
+void cleanup_and_exit(int sig) { 
+    terminal_exit_alt_screen();
+    exit(sig); // i don't know what exit code to use here
+}
+
 int main() {
-    
+    // set up signal handlers
+    if (signal(SIGTERM, cleanup_and_exit) == SIG_ERR ||
+        signal(SIGINT, cleanup_and_exit) == SIG_ERR ||
+        signal(SIGHUP, cleanup_and_exit) == SIG_ERR ||
+        signal(SIGTSTP, cleanup_and_exit) == SIG_ERR
+    ) {
+        perror("signal");
+        exit(1);
+    }
+
     // build the scene
     EntitySpace *space = create_space();
     Entity *cube1 = create_rectangle(-.5, -.5, -.5, 1, 1, 1);
