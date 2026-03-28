@@ -92,6 +92,8 @@ int main() {
     map->height = 40;
     map->distances = malloc(sizeof(double) * map->width * map->height);
 
+    terminal_enter_alt_screen();
+
     // render some stuff
     for (int i = 0; i < 60; i++) {
         /*
@@ -113,8 +115,11 @@ int main() {
             0, 0, -10, // camera position
             0, 0,      // camera rotation
             read_fds, write_fds, NUM_WORKERS);
+        terminal_move_cursor_to_topleft();
         render_luminosity(map);
     }
+
+    terminal_exit_alt_screen();
 
     // close the pipes and dispose of the children
     for (int i = 0; i < NUM_WORKERS; i++) {

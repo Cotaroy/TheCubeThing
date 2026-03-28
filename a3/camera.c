@@ -516,9 +516,9 @@ void capture_image(
 
     // end time
     gettimeofday(&stop, NULL);
-    printf("took %lu microseconds. exiting with %d tasks completed\n",
-            (stop.tv_sec - start.tv_sec) * 1000000 + stop.tv_usec - start.tv_usec,
-            tasks_completed);
+    // printf("took %lu microseconds. exiting with %d tasks completed\n",
+    //         (stop.tv_sec - start.tv_sec) * 1000000 + stop.tv_usec - start.tv_usec,
+    //         tasks_completed);
 
     for(int i = 0; i < num_tasks; i++) {
         // printf("[] %d\n", i);

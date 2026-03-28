@@ -1,11 +1,13 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
+#include "ansi_escape_sequences.h"
 #include "renderer.h"
 #include "raycast.h"
 
 // there are 69 chars here not including space or null terminator
-static char *hierarchy = "$@B%8&WM#*oahkbdpqwmZO0QLCJUYXzcvunxrjft/\\|()1{}[]?-_+~<>i!lI;:,\"^`'."; // lightest to darkest
+// lightest to darkest
+static char *hierarchy = "$@B%8&WM#*oahkbdpqwmZO0QLCJUYXzcvunxrjft/\\|()1{}[]?-_+~<>i!lI;:,\"^`'.";
 
 char get_pixel_char(double distance) {
     if (distance < EPSILON) {
