@@ -178,6 +178,60 @@ void translate(Entity *entity, double x_offset, double y_offset, double z_offset
     }
 }
 
+void rotate_x_light(LightSource *entity, double degree, double x, double y, double z) {
+    
+    entity->x -= x;
+    entity->y -= y;
+    entity->z -= z;
+
+    double cy = entity->y;
+    double cz = entity->z;
+
+    entity->y = cos(degree) * cy - sin(degree) * cz;
+    entity->z = sin(degree) * cy + cos(degree) * cz;
+
+    entity->x += x;
+    entity->y += y;
+    entity->z += z;
+
+}
+
+void rotate_y_light(LightSource *entity, double degree, double x, double y, double z) {
+
+    entity->x -= x;
+    entity->y -= y;
+    entity->z -= z;
+
+    double cx = entity->x;
+    double cz = entity->z;
+
+    entity->x = cos(degree) * cx + sin(degree) * cz;
+    entity->z = - sin(degree) * cx + cos(degree) * cz;
+
+    entity->x += x;
+    entity->y += y;
+    entity->z += z;
+
+}
+
+void rotate_z_light(LightSource *entity, double degree, double x, double y, double z) {
+
+    entity->x -= x;
+    entity->y -= y;
+    entity->z -= z;
+
+    double cx = entity->x;
+    double cy = entity->y;
+
+    entity->x = cos(degree) * cx - sin(degree) * cy;
+    entity->y = sin(degree) * cx + cos(degree) * cy;
+
+    entity->x += x;
+    entity->y += y;
+    entity->z += z;
+
+}
+
 void rotate_x(Entity *entity, double degree, double x, double y, double z) {
     Triangle *triangles = entity->object;
     Triangle *curr = triangles;

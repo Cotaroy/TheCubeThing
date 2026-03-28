@@ -203,6 +203,54 @@ void camera_worker_work(
             break;
         }
 
+        case MSGTYPE_SPACE_UPDATE_TRANSLATE_LIGHTSOURCE: {
+            CameraWorkerSpaceUpdate_TranslateLightSource details;
+            if (read_safely(fd_read, &details, sizeof(CameraWorkerSpaceUpdate_TranslateLightSource)) <= 0) {
+                perror("read details of TranslateLightSource update");
+                exit(1);
+            }
+            LightSource *source = get_light(space, details.entity_id);
+            translate_light(source, details.x_offset, details.y_offset, details.z_offset);
+            break;
+        }
+
+        case MSGTYPE_SPACE_UPDATE_ROTATE_LIGHTSOURCE: {
+            CameraWorkerSpaceUpdate_RotateLightSource details;
+            if(read_safely(fd_read, &details, sizeof(CameraWorkerSpaceUpdate_RotateLightSource)) <= 0) {
+                perror("read details of RotateLightSource update");
+                exit(1);
+            }
+            LightSource *entity = get_light(space, details.entity_id);
+
+            switch (details.axis_of_rotation) {
+                case MSGDETAIL_ROTATE_LIGHTSOURCE_AXIS_X:
+                    rotate_x_light(entity, details.angle, details.x_center, details.y_center, details.z_center);    
+                    break;
+                case MSGDETAIL_ROTATE_LIGHTSOURCE_AXIS_Y:
+                    rotate_y_light(entity, details.angle, details.x_center, details.y_center, details.z_center);    
+                    break;
+                case MSGDETAIL_ROTATE_LIGHTSOURCE_AXIS_Z:
+                    rotate_z_light(entity, details.angle, details.x_center, details.y_center, details.z_center);    
+                    break;
+                default:
+                    fprintf(stderr, "Unknown rotation axis 0x%x.",
+                            details.axis_of_rotation);
+                    exit(1);
+            }
+            break;
+        }
+
+        case MSGTYPE_SPACE_UPDATE_BRIGHTEN_LIGHTSOURCE: {
+            CameraWorkerSpaceUpdate_BrightenLightSource details;
+            if (read(fd_read, &details, sizeof(CameraWorkerSpaceUpdate_BrightenLightSource)) <= 0) {
+                perror("read details of BrightenLightSource update");
+                exit(1);
+            }
+            LightSource *source = get_light(space, details.entity_id);
+            brighten(source, details.delta_intensity);
+            break;
+        }
+
         default:
             fprintf(stderr,
                     "Unhandled message type '%d' received by worker at index %d.\n",

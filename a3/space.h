@@ -45,6 +45,9 @@ void free_space(EntitySpace *entities);
 LightSource *create_light_source(double x, double y, double z, double intensity);
 void translate_light(LightSource *light_source, double x, double y, double z);
 void brighten(LightSource *light_source, double delta_intensity);
+void rotate_x_light(LightSource *entity, double degree, double x, double y, double z);
+void rotate_y_light(LightSource *entity, double degree, double x, double y, double z);
+void rotate_z_light(LightSource *entity, double degree, double x, double y, double z);
 
 // (x,y,z) is the coordinate of the front left bottom vertex of the rectangle
 Entity *create_rectangle(double x, double y, double z, double x_length, double y_length, double z_length);

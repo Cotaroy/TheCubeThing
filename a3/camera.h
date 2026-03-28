@@ -9,9 +9,17 @@
 #define MSGTYPE_SPACE_UPDATE_TRANSLATE_ENTITY 0x10
 #define MSGTYPE_SPACE_UPDATE_ROTATE_ENTITY 0x11
 
+#define MSGTYPE_SPACE_UPDATE_TRANSLATE_LIGHTSOURCE 0x12
+#define MSGTYPE_SPACE_UPDATE_ROTATE_LIGHTSOURCE 0x13
+#define MSGTYPE_SPACE_UPDATE_BRIGHTEN_LIGHTSOURCE 0x14
+
 #define MSGDETAIL_ROTATE_ENTITY_AXIS_X 0x00
 #define MSGDETAIL_ROTATE_ENTITY_AXIS_Y 0x01
 #define MSGDETAIL_ROTATE_ENTITY_AXIS_Z 0x02
+
+#define MSGDETAIL_ROTATE_LIGHTSOURCE_AXIS_X 0x00
+#define MSGDETAIL_ROTATE_LIGHTSOURCE_AXIS_Y 0x01
+#define MSGDETAIL_ROTATE_LIGHTSOURCE_AXIS_Z 0x02
 
 typedef struct {
     uint8_t message_type;
@@ -52,6 +60,26 @@ typedef struct {
     double z_center;
 } CameraWorkerSpaceUpdate_RotateEntity;
 
+typedef struct {
+    int entity_id;
+    double x_offset;
+    double y_offset;
+    double z_offset;
+} CameraWorkerSpaceUpdate_TranslateLightSource;
+
+typedef struct {
+    int entity_id;
+    uint8_t axis_of_rotation;
+    double angle;
+    double x_center;
+    double y_center;
+    double z_center;
+} CameraWorkerSpaceUpdate_RotateLightSource;
+
+typedef struct {
+    int entity_id;
+    double delta_intensity;
+} CameraWorkerSpaceUpdate_BrightenLightSource;
 
 void capture_image(
     DistanceMap *film,
