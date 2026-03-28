@@ -20,10 +20,42 @@ double dot_product(double *v1, double *v2) {
 
 void normalize(double *result, double *vector) {
   double norm = sqrt(vector[0] * vector[0] + vector[1] * vector[1] + vector[2] * vector[2]);
+  
+  if (norm < ORTHOGONAL_TOLERANCE) {
+        fprintf(stderr, "vector has norm 0\n");
+        exit(1);
+    }
 
   for (int i = 0; i < 3; i++) {
     result[i] = vector[i] / norm;
   }
+}
+
+double get_luminosity(double *pos, double x_vector, double y_vector, double z_vector, LightSource *source, double *distance_return) {
+    double sphere_x = source->x;
+    double sphere_y = source->y;
+    double sphere_z = source->z;
+
+    double a = x_vector * x_vector + y_vector * y_vector + z_vector * z_vector;
+    double b = 2 * (x_vector * (pos[0] - sphere_x) + y_vector * (pos[1] - sphere_y) + z_vector * (pos[2] - sphere_z));
+    double c = (pos[0] - sphere_x) * (pos[0] - sphere_x) + (pos[1] - sphere_y) * (pos[1] - sphere_y) + (pos[2] - sphere_z) * (pos[2] -sphere_z) - LIGHT_RADIUS * LIGHT_RADIUS;
+
+    double discriminant = b * b - 4*a*c;
+    if (discriminant < ORTHOGONAL_TOLERANCE) {
+        *distance_return = INFINITY;
+        return 0;
+    }
+
+    double distance = (-b - sqrt(discriminant)) / (2 * a);
+
+    if (distance < ORTHOGONAL_TOLERANCE) {
+        *distance_return = INFINITY;
+        return 0;
+    }
+    *distance_return = distance;
+
+    return source->intensity / (distance);
+
 }
 
 // helper for shoot ray, returns distance from triangle
@@ -172,6 +204,23 @@ double shoot_light_ray(double *pos, double x_vector, double y_vector, double z_v
 
             curr_triangle = curr_triangle->next;
         }
+    }
+    double max_lum = 0;
+    double min_light_distance = INFINITY;
+
+    for (int i = 0; i < MAX_LIGHTS; i++) {
+        LightSource *light = get_light(space, i);
+        if (light == NULL) continue;
+        
+        double distance;
+
+        double lum = get_luminosity(pos, x_vector, y_vector, z_vector, light, &distance);
+        if (min_light_distance > distance) min_light_distance = distance;
+        if (lum > max_lum) max_lum = lum;
+    }
+
+    if (min_light_distance != INFINITY && min_light_distance < min_distance) {
+        return max_lum;
     }
     
     if (min_distance == INFINITY) {

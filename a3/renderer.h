@@ -2,7 +2,7 @@
 #define RENDERER_H
 #define MAX_DIST 128.0
 #define MIN_DIST 0.0
-#define MAX_LIGHT 100.0
+#define MAX_LIGHT 200.0
 #define MIN_LIGHT 0.0
 #define EPSILON 1e-8
 

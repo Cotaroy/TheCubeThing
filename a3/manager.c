@@ -73,8 +73,8 @@ int main() {
     EntitySpace *space = create_space();
     Entity *cube1 = create_rectangle(-.5, -.5, -.5, 1, 1, 1);
     Entity *cube2 = create_rectangle(-.25, -.25, -.25, .5, .5, .5);
-    LightSource *source = create_light_source(0, -3, -5, 1000);
-    // LightSource *source2 = create_light_source(3, 0, -5, 1000);
+    LightSource *source = create_light_source(0, 1, -2, 1000);
+    // LightSource *source2 = create_light_source(1, -1, 3, 500);
     add_light_to_entity_space(space, source, 0);
     // add_light_to_entity_space(space, source2, 1);
     add_to_entity_space(space, cube1, 1);
