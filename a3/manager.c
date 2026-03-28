@@ -1,6 +1,8 @@
 #include <math.h>
+#include <signal.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <sys/ioctl.h>
 #include <sys/wait.h>
 #include <unistd.h>
 #include "camera.h"
@@ -13,6 +15,15 @@
 #define NUM_WORKERS (8)
 #define HORIZONTAL_VIEW_ANGLE (PI / 4)
 #define PIXEL_ASPECT_RATIO (11.0 / 21.0)
+
+/*
+    The film size determines how much space is allocated to the
+    distance map that the camera captures images onto.
+    The camera may use less than the allocated space if the user's
+    terminal window is smaller, but it cannot use more.
+*/
+#define FILM_MAX_WIDTH  (256)
+#define FILM_MAX_HEIGHT (256)
 
 
 static void broadcast_to_pipes(int *write_fds, void *source_buffer, size_t nbytes) {
@@ -67,8 +78,42 @@ static void broadcast_rotate(EntitySpace *space, int *write_fds, int entity_id, 
     }
 }
 
+int terminal_width = 32;
+int terminal_height = 32;
+
+void cleanup_and_exit(int sig) { 
+    terminal_exit_alt_screen();
+    exit(sig); // i don't know what exit code to use here
+}
+void update_window_size(int) {
+    // https://www.man7.org/linux/man-pages/man2/TIOCSWINSZ.2const.html
+    struct winsize w;
+    if (ioctl(STDOUT_FILENO, TIOCGWINSZ, &w) < 0) {
+        perror("Failed to update window size.");
+        // not exiting because it seems like
+        // this shouldn't be a fatal error
+        return;
+    }
+    terminal_width = fmin(FILM_MAX_WIDTH, w.ws_col);
+    terminal_height = fmin(FILM_MAX_HEIGHT, w.ws_row);
+}
+
 int main() {
-    
+    // set up signal handlers
+    // https://en.wikipedia.org/wiki/Signal_(IPC)
+    if (signal(SIGTERM, cleanup_and_exit) == SIG_ERR ||
+        signal(SIGINT, cleanup_and_exit) == SIG_ERR ||
+        signal(SIGHUP, cleanup_and_exit) == SIG_ERR ||
+        signal(SIGTSTP, cleanup_and_exit) == SIG_ERR ||
+        signal(SIGWINCH, update_window_size) == SIG_ERR
+    ) {
+        perror("signal");
+        exit(1);
+    }
+
+    // update window size once on startup to give it the correct values
+    update_window_size(SIGWINCH);
+
     // build the scene
     EntitySpace *space = create_space();
     Entity *cube1 = create_rectangle(-.5, -.5, -.5, 1, 1, 1);
@@ -88,9 +133,11 @@ int main() {
 
     // create the film to capture the image on
     DistanceMap *map = malloc(sizeof(DistanceMap));
-    map->width = 120;
-    map->height = 40;
-    map->distances = malloc(sizeof(double) * map->width * map->height);
+    map->width = terminal_width;
+    map->height = terminal_height;
+    map->distances = malloc(sizeof(double) * FILM_MAX_WIDTH * FILM_MAX_HEIGHT);
+
+    terminal_enter_alt_screen();
 
     // render some stuff
     for (int i = 0; i < 60; i++) {
@@ -100,6 +147,10 @@ int main() {
             should be empty.
             I don't know if this is always actually true.
         */
+
+        // make sure the film is always in sync with the user's window size
+        map->width = terminal_width;
+        map->height = terminal_height;
 
         broadcast_translate(space, write_fds, 2, 0, -3./60, 0);
         broadcast_rotate(space, write_fds, 2, MSGDETAIL_ROTATE_ENTITY_AXIS_X, PI/32, cube2->x_center, cube2->y_center, cube2->z_center);
@@ -117,8 +168,11 @@ int main() {
             0, 0, -10, // camera position
             0, 0,      // camera rotation
             read_fds, write_fds, NUM_WORKERS);
+        terminal_move_cursor_to_topleft();
         render_luminosity(map);
     }
+
+    terminal_exit_alt_screen();
 
     // close the pipes and dispose of the children
     for (int i = 0; i < NUM_WORKERS; i++) {
