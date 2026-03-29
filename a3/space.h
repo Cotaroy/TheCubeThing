@@ -31,6 +31,8 @@ typedef struct entity_space {
 } EntitySpace;
 
 // EntitySpace functions
+// initializes lists to be NULL
+// note that adding to the entity space already frees, whatever could have been at that index
 EntitySpace *create_space();
 void add_to_entity_space(EntitySpace *space, Entity *entity, int id);
 void delete_from_entity_space(EntitySpace *space, int id);

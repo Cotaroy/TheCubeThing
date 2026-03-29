@@ -242,12 +242,56 @@ void camera_worker_work(
 
         case MSGTYPE_SPACE_UPDATE_BRIGHTEN_LIGHTSOURCE: {
             CameraWorkerSpaceUpdate_BrightenLightSource details;
-            if (read(fd_read, &details, sizeof(CameraWorkerSpaceUpdate_BrightenLightSource)) <= 0) {
+            if (read_safely(fd_read, &details, sizeof(CameraWorkerSpaceUpdate_BrightenLightSource)) <= 0) {
                 perror("read details of BrightenLightSource update");
                 exit(1);
             }
             LightSource *source = get_light(space, details.entity_id);
             brighten(source, details.delta_intensity);
+            break;
+        }
+
+        case MSGTYPE_SPACE_UPDATE_NEW_ENTITY: {
+            CameraWorkerSpaceUpdate_NewEntity details;
+            if (read_safely(fd_read, &details, sizeof(CameraWorkerSpaceUpdate_NewEntity)) <= 0) {
+                perror("read details of NewEntity update");
+                exit(1);
+            }
+            Entity *entity = create_rectangle(details.corner_coord[0], details.corner_coord[1], details.corner_coord[2], 
+                                              details.side_lengths[0], details.side_lengths[1], details.side_lengths[2]);
+            add_to_entity_space(space, entity, details.entity_id);
+            break;
+        }
+
+        case MSGTYPE_SPACE_UPDATE_NEW_LIGHTSOURCE: {
+            CameraWorkerSpaceUpdate_NewLightSource details;
+            if (read_safely(fd_read, &details, sizeof(CameraWorkerSpaceUpdate_NewLightSource)) <= 0) {
+                perror("read details of NewLightSource update");
+                exit(1);
+            }
+            LightSource *entity = create_light_source(details.coord[0], details.coord[1], details.coord[2], 
+                                              details.intensity);
+            add_light_to_entity_space(space, entity, details.entity_id);
+            break;
+        }
+
+        case MSGTYPE_SPACE_UPDATE_DELETE_ENTITY: {
+            CameraWorkerSpaceUpdate_DeleteEntity details;
+            if (read_safely(fd_read, &details, sizeof(CameraWorkerSpaceUpdate_DeleteEntity)) <= 0) {
+                perror("read details of DeleteEntity update");
+                exit(1);
+            }
+            delete_from_entity_space(space, details.entity_id);
+            break;
+        }
+
+        case MSGTYPE_SPACE_UPDATE_DELETE_LIGHTSOURCE: {
+            CameraWorkerSpaceUpdate_DeleteLightSource details;
+            if (read_safely(fd_read, &details, sizeof(CameraWorkerSpaceUpdate_DeleteLightSource)) <= 0) {
+                perror("read details of DeleteLightSource update");
+                exit(1);
+            }
+            delete_light_from_entity_space(space, details.entity_id);
             break;
         }
 
@@ -268,6 +312,7 @@ void camera_worker_work(
         exit(1);
     }
     // printf("Worker %d exiting after completing %d tasks.\n", worker_idx, tasks_completed);
+    free_space(space);
     exit(0);
 }
 

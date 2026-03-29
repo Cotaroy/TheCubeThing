@@ -13,6 +13,11 @@
 #define MSGTYPE_SPACE_UPDATE_ROTATE_LIGHTSOURCE 0x13
 #define MSGTYPE_SPACE_UPDATE_BRIGHTEN_LIGHTSOURCE 0x14
 
+#define MSGTYPE_SPACE_UPDATE_NEW_ENTITY 0x15
+#define MSGTYPE_SPACE_UPDATE_DELETE_ENTITY 0x16
+#define MSGTYPE_SPACE_UPDATE_NEW_LIGHTSOURCE 0x17
+#define MSGTYPE_SPACE_UPDATE_DELETE_LIGHTSOURCE 0x18
+
 #define MSGDETAIL_ROTATE_ENTITY_AXIS_X 0x00
 #define MSGDETAIL_ROTATE_ENTITY_AXIS_Y 0x01
 #define MSGDETAIL_ROTATE_ENTITY_AXIS_Z 0x02
@@ -80,6 +85,26 @@ typedef struct {
     int entity_id;
     double delta_intensity;
 } CameraWorkerSpaceUpdate_BrightenLightSource;
+
+typedef struct {
+    int entity_id;
+    double corner_coord[3];
+    double side_lengths[3];
+} CameraWorkerSpaceUpdate_NewEntity;
+
+typedef struct {
+    int entity_id;
+} CameraWorkerSpaceUpdate_DeleteEntity;
+
+typedef struct {
+    int entity_id;
+    double coord[3];
+    double intensity;
+} CameraWorkerSpaceUpdate_NewLightSource;
+
+typedef struct {
+    int entity_id;
+} CameraWorkerSpaceUpdate_DeleteLightSource;
 
 void capture_image(
     DistanceMap *film,

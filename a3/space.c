@@ -21,6 +21,12 @@ Triangle *create_triangle(double *v1, double *v2, double *v3) {
 
 EntitySpace *create_space() {
     EntitySpace *space = malloc(sizeof(EntitySpace));
+    for (int i = 0; i < MAX_ENTITIES; i++) {
+        space->entity_list[0] = NULL;
+    }
+    for (int i = 0; i < MAX_LIGHTS; i++) {
+        space->light_sources[0] = NULL;
+    }
     return space;
 }
 
@@ -477,6 +483,7 @@ void free_space(EntitySpace *entities) {
 }
 
 void add_to_entity_space(EntitySpace *space, Entity *entity, int id) {
+    delete_from_entity_space(space, id);
     space->entity_list[id] = entity;
 }
 
@@ -486,6 +493,7 @@ void delete_from_entity_space(EntitySpace *space, int id) {
 }
 
 void add_light_to_entity_space(EntitySpace *space, LightSource *entity, int id) {
+    delete_light_from_entity_space(space, id);
     space->light_sources[id] = entity;
 }
 
