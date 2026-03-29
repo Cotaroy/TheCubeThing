@@ -5,6 +5,7 @@
 #include "manager.h"
 #include "math.h"
 #include "controller.h"
+#define PI (3.14159265358979323846)
 
 void restore_original_settings(struct termios *og_settings) {
     tcsetattr(STDIN_FILENO, TCSANOW, og_settings);
@@ -33,10 +34,43 @@ void handle_non_canonical_input(double *camera_x, double *camera_y, double *came
             perror("failed to read user movement input");
             exit(1);
         }
-        if (input_char == 'w') {
-            *camera_x += cos(*camera_forward_azimuth) * sin(*camera_forward_inclination) * STEP_DISTANCE;
-            *camera_y += sin(*camera_forward_azimuth) * sin(*camera_forward_inclination) * STEP_DISTANCE;
-            *camera_z += cos(*camera_forward_inclination) * STEP_DISTANCE;
+        switch (input_char) {
+            case 'w':
+                *camera_x += cos(*camera_forward_azimuth) * sin(*camera_forward_inclination) * STEP_DISTANCE;
+                *camera_y += sin(*camera_forward_azimuth) * sin(*camera_forward_inclination) * STEP_DISTANCE;
+                *camera_z += cos(*camera_forward_inclination) * STEP_DISTANCE;
+                break;
+            case 's':
+                *camera_x -= cos(*camera_forward_azimuth) * sin(*camera_forward_inclination) * STEP_DISTANCE;
+                *camera_y -= sin(*camera_forward_azimuth) * sin(*camera_forward_inclination) * STEP_DISTANCE;
+                *camera_z -= cos(*camera_forward_inclination) * STEP_DISTANCE;
+                break;
+            case 'a':
+                // TODO
+                break;
+            case 'd':
+                // TODO
+                break;
+            case 'h':
+                *camera_forward_azimuth += STEP_TURN_DISTANCE_HORI;
+                if (*camera_forward_azimuth > 2 * PI) {
+                    *camera_forward_azimuth -= 2 * PI;
+                }
+                break;
+            case 'l':
+                *camera_forward_azimuth -= STEP_TURN_DISTANCE_HORI;
+                if (*camera_forward_azimuth < 2 * PI) {
+                    *camera_forward_azimuth += 2 * PI;
+                }
+                break;
+            case 'j':
+                *camera_forward_inclination += STEP_TURN_DISTANCE_VERTI;
+                if (*camera_forward_inclination > PI) *camera_forward_inclination = PI;
+                break;
+            case 'k':
+                *camera_forward_inclination -= STEP_TURN_DISTANCE_VERTI;
+                if (*camera_forward_inclination < 0) *camera_forward_inclination = 0;
+                break;
         }
     }
 }

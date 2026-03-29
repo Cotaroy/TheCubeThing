@@ -255,11 +255,11 @@ int main() {
     // setup handling camera movement through user input
     struct termios og_settings;
     setup_non_canonical(&og_settings);
-    double camera_x = 0;
+    double camera_x = -10;
     double camera_y = 0;
-    double camera_z = -10;
+    double camera_z = 0;
     double camera_azimuth = 0;
-    double camera_inclination = 0;
+    double camera_inclination = PI/2;
 
     // build the scene
     EntitySpace *space = create_space();
@@ -279,10 +279,15 @@ int main() {
     terminal_enter_alt_screen();
 
     Entity *cube1 = broadcast_create_entity(space, write_fds, 0, -.5, -.5, -.5, 1, 1, 1);
-    broadcast_create_light_source(space, write_fds, 0, 0, 2, 0, 1000);
+    broadcast_create_light_source(space, write_fds, 0, 0, 0, 2, 1000);
+    broadcast_create_light_source(space, write_fds, 1, 0, 0, -2, 1000);
+    broadcast_create_light_source(space, write_fds, 2, 2, 0, 0, 1000);
+    broadcast_create_light_source(space, write_fds, 3, -2, 0, 0, 1000);
+    broadcast_create_light_source(space, write_fds, 4, 0, 2, 0, 1000);
+    broadcast_create_light_source(space, write_fds, 5, 0, -2, 0, 1000);
 
     // render some stuff
-    for (int i = 0; i < 100; i++) {
+    for (int i = 0; i == i; i++) {
         /*
             Assumption:
             Between frames, the pipes used to write to the children
@@ -295,7 +300,7 @@ int main() {
         map->height = terminal_height;
 
         handle_non_canonical_input(&camera_x, &camera_y, &camera_z, &camera_azimuth, &camera_inclination);
-        printf("%f\n", camera_z);
+        printf("(%f, %f, %f)\n", camera_x, camera_y, camera_z);
 
 
         // broadcast_translate(space, write_fds, 2, 0, -3./60, 0);
@@ -306,9 +311,9 @@ int main() {
         // broadcast_rotate(space, write_fds, 2, MSGDETAIL_ROTATE_ENTITY_AXIS_Y, PI/32, cube2->x_center, cube2->y_center, cube2->z_center);
         // broadcast_rotate(space, write_fds, 2, MSGDETAIL_ROTATE_ENTITY_AXIS_Z, PI/32, cube2->x_center, cube2->y_center, cube2->z_center);
         
-        broadcast_rotate_light(space, write_fds, 0, MSGDETAIL_ROTATE_LIGHTSOURCE_AXIS_X, PI/32, 0, 0, 0);
+        // broadcast_rotate_light(space, write_fds, 0, MSGDETAIL_ROTATE_LIGHTSOURCE_AXIS_X, PI/32, 0, 0, 0);
         // broadcast_rotate_light(space, write_fds, 0, MSGDETAIL_ROTATE_LIGHTSOURCE_AXIS_Y, PI/32, cube1->x_center, cube1->y_center, cube1->z_center);
-        broadcast_rotate_light(space, write_fds, 0, MSGDETAIL_ROTATE_LIGHTSOURCE_AXIS_Z, PI/32, 0, 0, 0);
+        // broadcast_rotate_light(space, write_fds, 0, MSGDETAIL_ROTATE_LIGHTSOURCE_AXIS_Z, PI/32, 0, 0, 0);
     
         broadcast_rotate(space, write_fds, 0, MSGDETAIL_ROTATE_ENTITY_AXIS_X, -PI/64, cube1->x_center, cube1->y_center, cube1->z_center);
         broadcast_rotate(space, write_fds, 0, MSGDETAIL_ROTATE_ENTITY_AXIS_Y, -PI/64, cube1->x_center, cube1->y_center, cube1->z_center);

@@ -5,6 +5,8 @@
 #include <unistd.h>
 
 #define STEP_DISTANCE 0.2
+#define STEP_TURN_DISTANCE_HORI 0.0245436926062
+#define STEP_TURN_DISTANCE_VERTI 0.0245436926062
 
 void restore_original_settings(struct termios *og_settings);
 
