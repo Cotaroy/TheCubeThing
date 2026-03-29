@@ -271,7 +271,7 @@ int main() {
     broadcast_create_light_source(space, write_fds, 0, 0, 2, 0, 1000);
 
     // render some stuff
-    for (int i = 0; i == i; i++) {
+    for (int i = 0; i < 100; i++) {
         /*
             Assumption:
             Between frames, the pipes used to write to the children
