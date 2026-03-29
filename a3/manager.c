@@ -9,6 +9,8 @@
 #include "space.h"
 #include "raycast.h"
 #include "renderer.h"
+#include "manager.h"
+#include "controller.h"
 
 #define PI (3.14159265358979323846)
 
@@ -26,7 +28,7 @@
 #define FILM_MAX_HEIGHT (256)
 
 
-static void broadcast_to_pipes(int *write_fds, void *source_buffer, size_t nbytes) {
+void broadcast_to_pipes(int *write_fds, void *source_buffer, size_t nbytes) {
     for (int i = 0; i < NUM_WORKERS; i++) {
 
         // printf("writing to [%d]\n", i);
@@ -38,7 +40,7 @@ static void broadcast_to_pipes(int *write_fds, void *source_buffer, size_t nbyte
     }
 }
 
-static void broadcast_translate(EntitySpace *space, int *write_fds, int entity_id, double x_offset, double y_offset, double z_offset) {
+void broadcast_translate(EntitySpace *space, int *write_fds, int entity_id, double x_offset, double y_offset, double z_offset) {
     Entity *entity = get_entity(space, entity_id);
 
     if (entity == NULL) {
@@ -59,7 +61,7 @@ static void broadcast_translate(EntitySpace *space, int *write_fds, int entity_i
     broadcast_to_pipes(write_fds, &translation_details, sizeof(CameraWorkerSpaceUpdate_TranslateEntity));
 }
 
-static void broadcast_rotate(EntitySpace *space, int *write_fds, int entity_id, uint8_t axis_of_rotation, double angle, double x_center, double y_center, double z_center) {
+void broadcast_rotate(EntitySpace *space, int *write_fds, int entity_id, uint8_t axis_of_rotation, double angle, double x_center, double y_center, double z_center) {
 
     Entity *entity = get_entity(space, entity_id);
     if (entity == NULL) {
@@ -90,7 +92,7 @@ static void broadcast_rotate(EntitySpace *space, int *write_fds, int entity_id, 
     }
 }
 
-static void broadcast_translate_light(EntitySpace *space, int *write_fds, int entity_id, double x_offset, double y_offset, double z_offset) {
+void broadcast_translate_light(EntitySpace *space, int *write_fds, int entity_id, double x_offset, double y_offset, double z_offset) {
     LightSource *entity = get_light(space, entity_id);
 
     if (entity == NULL) {
@@ -110,7 +112,7 @@ static void broadcast_translate_light(EntitySpace *space, int *write_fds, int en
     translate_light(entity, x_offset, y_offset, z_offset);
 }
 
-static void broadcast_rotate_light(EntitySpace *space, int *write_fds, int entity_id, uint8_t axis_of_rotation, double angle, double x_center, double y_center, double z_center) {
+void broadcast_rotate_light(EntitySpace *space, int *write_fds, int entity_id, uint8_t axis_of_rotation, double angle, double x_center, double y_center, double z_center) {
     LightSource *entity = get_light(space, entity_id);
 
     if (entity == NULL) {
@@ -141,7 +143,7 @@ static void broadcast_rotate_light(EntitySpace *space, int *write_fds, int entit
     }
 }
 
-static void broadcast_brighten_light(EntitySpace *space, int *write_fds, int entity_id, double delta_intensity) {
+void broadcast_brighten_light(EntitySpace *space, int *write_fds, int entity_id, double delta_intensity) {
     LightSource *source = get_light(space, entity_id);
 
     if (source == NULL) {
@@ -160,7 +162,7 @@ static void broadcast_brighten_light(EntitySpace *space, int *write_fds, int ent
     brighten(source, delta_intensity);
 }
 
-static Entity *broadcast_create_entity(EntitySpace *space, int *write_fds, int entity_id, double x_corner, double y_corner, double z_corner, double x_length, double y_length, double z_length) {
+Entity *broadcast_create_entity(EntitySpace *space, int *write_fds, int entity_id, double x_corner, double y_corner, double z_corner, double x_length, double y_length, double z_length) {
     CameraMessageHeader header;
     CameraWorkerSpaceUpdate_NewEntity new_details;
     header.message_type = MSGTYPE_SPACE_UPDATE_NEW_ENTITY;
@@ -176,7 +178,7 @@ static Entity *broadcast_create_entity(EntitySpace *space, int *write_fds, int e
     return entity;
 }
 
-static LightSource *broadcast_create_light_source(EntitySpace *space, int *write_fds, int entity_id, double x, double y, double z, double intensity) {
+LightSource *broadcast_create_light_source(EntitySpace *space, int *write_fds, int entity_id, double x, double y, double z, double intensity) {
     CameraMessageHeader header;
     CameraWorkerSpaceUpdate_NewLightSource new_details;
     header.message_type = MSGTYPE_SPACE_UPDATE_NEW_LIGHTSOURCE;
@@ -192,7 +194,7 @@ static LightSource *broadcast_create_light_source(EntitySpace *space, int *write
     return source;
 }
 
-static void broadcast_delete_entity(EntitySpace *space, int *write_fds, int entity_id) {
+void broadcast_delete_entity(EntitySpace *space, int *write_fds, int entity_id) {
     CameraMessageHeader header;
     CameraWorkerSpaceUpdate_DeleteEntity delete_details;
     header.message_type = MSGTYPE_SPACE_UPDATE_DELETE_ENTITY;
@@ -203,7 +205,7 @@ static void broadcast_delete_entity(EntitySpace *space, int *write_fds, int enti
     delete_from_entity_space(space, entity_id);
 }
 
-static void broadcast_delete_light_source(EntitySpace *space, int *write_fds, int entity_id) {
+void broadcast_delete_light_source(EntitySpace *space, int *write_fds, int entity_id) {
     CameraMessageHeader header;
     CameraWorkerSpaceUpdate_DeleteLightSource delete_details;
     header.message_type = MSGTYPE_SPACE_UPDATE_DELETE_LIGHTSOURCE;
@@ -250,6 +252,15 @@ int main() {
     // update window size once on startup to give it the correct values
     update_window_size(SIGWINCH);
 
+    // setup handling camera movement through user input
+    struct termios og_settings;
+    setup_non_canonical(&og_settings);
+    double camera_x = 0;
+    double camera_y = 0;
+    double camera_z = -10;
+    double camera_azimuth = 0;
+    double camera_inclination = 0;
+
     // build the scene
     EntitySpace *space = create_space();
 
@@ -283,12 +294,9 @@ int main() {
         map->width = terminal_width;
         map->height = terminal_height;
 
-        if (i == 64) {
-            broadcast_delete_entity(space, write_fds, 0);
-        }
-        if (i >= 90) {
-            broadcast_delete_light_source(space, write_fds, 0);
-        }
+        handle_non_canonical_input(&camera_x, &camera_y, &camera_z, &camera_azimuth, &camera_inclination);
+        printf("%f\n", camera_z);
+
 
         // broadcast_translate(space, write_fds, 2, 0, -3./60, 0);
 
@@ -298,24 +306,20 @@ int main() {
         // broadcast_rotate(space, write_fds, 2, MSGDETAIL_ROTATE_ENTITY_AXIS_Y, PI/32, cube2->x_center, cube2->y_center, cube2->z_center);
         // broadcast_rotate(space, write_fds, 2, MSGDETAIL_ROTATE_ENTITY_AXIS_Z, PI/32, cube2->x_center, cube2->y_center, cube2->z_center);
         
-        if (i < 90) {
-            broadcast_rotate_light(space, write_fds, 0, MSGDETAIL_ROTATE_LIGHTSOURCE_AXIS_X, PI/32, 0, 0, 0);
-            // broadcast_rotate_light(space, write_fds, 0, MSGDETAIL_ROTATE_LIGHTSOURCE_AXIS_Y, PI/32, cube1->x_center, cube1->y_center, cube1->z_center);
-            broadcast_rotate_light(space, write_fds, 0, MSGDETAIL_ROTATE_LIGHTSOURCE_AXIS_Z, PI/32, 0, 0, 0);
-        }
-        
-        if (i < 64) {
-            broadcast_rotate(space, write_fds, 0, MSGDETAIL_ROTATE_ENTITY_AXIS_X, -PI/64, cube1->x_center, cube1->y_center, cube1->z_center);
-            broadcast_rotate(space, write_fds, 0, MSGDETAIL_ROTATE_ENTITY_AXIS_Y, -PI/64, cube1->x_center, cube1->y_center, cube1->z_center);
-            broadcast_rotate(space, write_fds, 0, MSGDETAIL_ROTATE_ENTITY_AXIS_Z, -PI/64, cube1->x_center, cube1->y_center, cube1->z_center);
-        }
+        broadcast_rotate_light(space, write_fds, 0, MSGDETAIL_ROTATE_LIGHTSOURCE_AXIS_X, PI/32, 0, 0, 0);
+        // broadcast_rotate_light(space, write_fds, 0, MSGDETAIL_ROTATE_LIGHTSOURCE_AXIS_Y, PI/32, cube1->x_center, cube1->y_center, cube1->z_center);
+        broadcast_rotate_light(space, write_fds, 0, MSGDETAIL_ROTATE_LIGHTSOURCE_AXIS_Z, PI/32, 0, 0, 0);
+    
+        broadcast_rotate(space, write_fds, 0, MSGDETAIL_ROTATE_ENTITY_AXIS_X, -PI/64, cube1->x_center, cube1->y_center, cube1->z_center);
+        broadcast_rotate(space, write_fds, 0, MSGDETAIL_ROTATE_ENTITY_AXIS_Y, -PI/64, cube1->x_center, cube1->y_center, cube1->z_center);
+        broadcast_rotate(space, write_fds, 0, MSGDETAIL_ROTATE_ENTITY_AXIS_Z, -PI/64, cube1->x_center, cube1->y_center, cube1->z_center);
 
         capture_image(
             map,
             HORIZONTAL_VIEW_ANGLE, // horizontal view angle
             PIXEL_ASPECT_RATIO,
-            0, 0, -10, // camera position
-            0, 0,      // camera rotation
+            camera_x, camera_y, camera_z, // camera position
+            camera_azimuth, camera_inclination,      // camera rotation
             read_fds, write_fds, NUM_WORKERS);
         terminal_move_cursor_to_topleft();
         render_luminosity(map);
@@ -338,6 +342,7 @@ int main() {
         }
     }
 
+    restore_original_settings(&og_settings);
     free(map->distances);
     free(map);
     free_space(space);
