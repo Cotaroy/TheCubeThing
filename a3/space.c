@@ -37,6 +37,9 @@ Entity *create_entity(Triangle *object) {
     die("malloc");
   }
   new_entity->object = object;
+  new_entity->x_center = 0;
+  new_entity->y_center = 0;
+  new_entity->z_center = 0;
 
   return new_entity;
 }
@@ -472,7 +475,7 @@ void free_space(EntitySpace *space) {
 }
 
 void add_to_entity_space(EntitySpace *space, Entity *entity, int id) {
-    delete_light_from_entity_space(space, id);
+    delete_from_entity_space(space, id);
     space->entity_list[id] = entity;
 }
 
