@@ -7,9 +7,10 @@
 
 Triangle *create_triangle(double *v1, double *v2, double *v3) {
   // make space for Triangle
-  Triangle *new_triangle = malloc(sizeof(Triangle));
+  Triangle *new_triangle = calloc(1, sizeof(Triangle));
   if (new_triangle == NULL) {
-    die("malloc");
+    perror("malloc");
+    exit(EXIT_FAILURE);
   }
   new_triangle->vertex0[0] = v1[0]; new_triangle->vertex0[1] = v1[1]; new_triangle->vertex0[2] = v1[2];
   new_triangle->vertex1[0] = v2[0]; new_triangle->vertex1[1] = v2[1]; new_triangle->vertex1[2] = v2[2];
@@ -62,7 +63,7 @@ void brighten(LightSource *light_source, double delta_intensity) {
 
 Entity *create_rectangle(double x, double y, double z, double x_length, double y_length, double z_length) {
   
-  double vertices[36][3];
+  double vertices[36][3] = {0};
 
   // hard code each vertex ;-;
   vertices[0][0] = x; vertices[0][1] = y; vertices[0][2] = z;
