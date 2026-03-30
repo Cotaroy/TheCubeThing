@@ -4,9 +4,9 @@
 #define MAX_LIGHTS 10
 
 typedef struct triangle {
-  double *vertex0;
-  double *vertex1;
-  double *vertex2;
+  double vertex0[3];
+  double vertex1[3];
+  double vertex2[3];
   struct triangle *next; // triangle lists will be NULL terminated
 } Triangle;
 

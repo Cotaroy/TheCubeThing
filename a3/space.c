@@ -11,9 +11,9 @@ Triangle *create_triangle(double *v1, double *v2, double *v3) {
   if (new_triangle == NULL) {
     die("malloc");
   }
-  new_triangle->vertex0 = v1;
-  new_triangle->vertex1 = v2;
-  new_triangle->vertex2 = v3;
+  new_triangle->vertex0[0] = v1[0]; new_triangle->vertex0[1] = v1[1]; new_triangle->vertex0[2] = v1[2];
+  new_triangle->vertex1[0] = v2[0]; new_triangle->vertex1[1] = v2[1]; new_triangle->vertex1[2] = v2[2];
+  new_triangle->vertex2[0] = v3[0]; new_triangle->vertex2[1] = v3[1]; new_triangle->vertex2[2] = v3[2];
   new_triangle->next = NULL;
   
   return new_triangle;
@@ -59,19 +59,7 @@ void brighten(LightSource *light_source, double delta_intensity) {
 
 Entity *create_rectangle(double x, double y, double z, double x_length, double y_length, double z_length) {
   
-  double *vertices[36];
-
-  // allocate space for each vertex
-  for (int i = 0; i < 36; i++) {
-    vertices[i] = malloc(sizeof(double) * 3);
-    // handle error
-    if (vertices[i] == NULL) {
-      for (int j = 0; j < i; j++) {
-        free(vertices[j]);
-      }
-      die("malloc");
-    }
-  }
+  double vertices[36][3];
 
   // hard code each vertex ;-;
   vertices[0][0] = x; vertices[0][1] = y; vertices[0][2] = z;
@@ -446,9 +434,6 @@ void free_all_triangles(Triangle *triangle) {
   if (triangle == NULL) {
     return;
   }
-  free(triangle->vertex0);
-  free(triangle->vertex1);
-  free(triangle->vertex2);
 
   free_all_triangles(triangle->next);
   free(triangle);
