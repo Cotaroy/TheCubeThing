@@ -41,7 +41,7 @@ void delete_light_from_entity_space(EntitySpace *space, int id);
 Triangle *get_object(EntitySpace *space, int id);
 Entity *get_entity(EntitySpace *space, int id);
 LightSource *get_light(EntitySpace *space, int id);
-void free_space(EntitySpace *entities);
+void free_space(EntitySpace *space);
 
 // LightSource functions
 LightSource *create_light_source(double x, double y, double z, double intensity);
