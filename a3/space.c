@@ -477,8 +477,10 @@ void free_space(EntitySpace *entities) {
         }
     }
     for (int i = 0; i < MAX_LIGHTS; i++) {
-        free(entities->light_sources[i]);
-        entities->light_sources[i] = NULL;
+        if (entities->light_sources[i] != NULL) {
+            free(entities->light_sources[i]);
+            entities->light_sources[i] = NULL;
+        }
     }
     free(entities);
     entities = NULL;
