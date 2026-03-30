@@ -28,8 +28,6 @@
 
 typedef struct {
     uint8_t message_type;
-    uint32_t length; // number of bytes that come after this header
-                     // only used for variable-width message types
 } CameraMessageHeader;
 
 typedef struct {

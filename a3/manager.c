@@ -50,8 +50,8 @@ void broadcast_translate(EntitySpace *space, int *write_fds, int entity_id, doub
 
     translate(entity, x_offset, y_offset, z_offset);
 
-    CameraMessageHeader header;
-    CameraWorkerSpaceUpdate_TranslateEntity translation_details;
+    CameraMessageHeader header = {0};
+    CameraWorkerSpaceUpdate_TranslateEntity translation_details = {0};
     header.message_type = MSGTYPE_SPACE_UPDATE_TRANSLATE_ENTITY;
     translation_details.entity_id = entity_id;
     translation_details.x_offset = x_offset;
@@ -69,8 +69,8 @@ void broadcast_rotate(EntitySpace *space, int *write_fds, int entity_id, uint8_t
         exit(1);
     }
 
-    CameraMessageHeader header;
-    CameraWorkerSpaceUpdate_RotateEntity rotation_details;
+    CameraMessageHeader header = {0};
+    CameraWorkerSpaceUpdate_RotateEntity rotation_details = {0};
     header.message_type = MSGTYPE_SPACE_UPDATE_ROTATE_ENTITY;
     rotation_details.entity_id = entity_id;
     rotation_details.axis_of_rotation = axis_of_rotation;
@@ -99,8 +99,8 @@ void broadcast_translate_light(EntitySpace *space, int *write_fds, int entity_id
         fprintf(stderr, "Provided invalid entity_id (%d), perhaps it was deleted?\n", entity_id);
     }
 
-    CameraMessageHeader header;
-    CameraWorkerSpaceUpdate_TranslateLightSource translation_details;
+    CameraMessageHeader header = {0};
+    CameraWorkerSpaceUpdate_TranslateLightSource translation_details = {0};
     header.message_type = MSGTYPE_SPACE_UPDATE_TRANSLATE_LIGHTSOURCE;
     translation_details.entity_id = entity_id;
     translation_details.x_offset = x_offset;
@@ -120,8 +120,8 @@ void broadcast_rotate_light(EntitySpace *space, int *write_fds, int entity_id, u
         exit(1);
     }
 
-    CameraMessageHeader header;
-    CameraWorkerSpaceUpdate_RotateLightSource rotation_details;
+    CameraMessageHeader header = {0};
+    CameraWorkerSpaceUpdate_RotateLightSource rotation_details = {0};
     header.message_type = MSGTYPE_SPACE_UPDATE_ROTATE_LIGHTSOURCE;
     rotation_details.entity_id = entity_id;
     rotation_details.axis_of_rotation = axis_of_rotation;
@@ -151,8 +151,8 @@ void broadcast_brighten_light(EntitySpace *space, int *write_fds, int entity_id,
         exit(1);
     }
 
-    CameraMessageHeader header;
-    CameraWorkerSpaceUpdate_BrightenLightSource brighten_details;
+    CameraMessageHeader header = {0};
+    CameraWorkerSpaceUpdate_BrightenLightSource brighten_details = {0};
     header.message_type = MSGTYPE_SPACE_UPDATE_BRIGHTEN_LIGHTSOURCE;
     brighten_details.entity_id = entity_id;
     brighten_details.delta_intensity = delta_intensity;
@@ -163,8 +163,8 @@ void broadcast_brighten_light(EntitySpace *space, int *write_fds, int entity_id,
 }
 
 Entity *broadcast_create_entity(EntitySpace *space, int *write_fds, int entity_id, double x_corner, double y_corner, double z_corner, double x_length, double y_length, double z_length) {
-    CameraMessageHeader header;
-    CameraWorkerSpaceUpdate_NewEntity new_details;
+    CameraMessageHeader header = {0};
+    CameraWorkerSpaceUpdate_NewEntity new_details = {0};
     header.message_type = MSGTYPE_SPACE_UPDATE_NEW_ENTITY;
     new_details.entity_id = entity_id;
     new_details.corner_coord[0] = x_corner; new_details.corner_coord[1] = y_corner; new_details.corner_coord[2] = z_corner;
@@ -179,8 +179,8 @@ Entity *broadcast_create_entity(EntitySpace *space, int *write_fds, int entity_i
 }
 
 LightSource *broadcast_create_light_source(EntitySpace *space, int *write_fds, int entity_id, double x, double y, double z, double intensity) {
-    CameraMessageHeader header;
-    CameraWorkerSpaceUpdate_NewLightSource new_details;
+    CameraMessageHeader header = {0};
+    CameraWorkerSpaceUpdate_NewLightSource new_details = {0};
     header.message_type = MSGTYPE_SPACE_UPDATE_NEW_LIGHTSOURCE;
     new_details.entity_id = entity_id;
     new_details.coord[0] = x; new_details.coord[1] = y; new_details.coord[2] = z;
@@ -195,8 +195,8 @@ LightSource *broadcast_create_light_source(EntitySpace *space, int *write_fds, i
 }
 
 void broadcast_delete_entity(EntitySpace *space, int *write_fds, int entity_id) {
-    CameraMessageHeader header;
-    CameraWorkerSpaceUpdate_DeleteEntity delete_details;
+    CameraMessageHeader header = {0};
+    CameraWorkerSpaceUpdate_DeleteEntity delete_details = {0};
     header.message_type = MSGTYPE_SPACE_UPDATE_DELETE_ENTITY;
     delete_details.entity_id = entity_id;
     broadcast_to_pipes(write_fds, &header, sizeof(CameraMessageHeader));
@@ -206,8 +206,8 @@ void broadcast_delete_entity(EntitySpace *space, int *write_fds, int entity_id) 
 }
 
 void broadcast_delete_light_source(EntitySpace *space, int *write_fds, int entity_id) {
-    CameraMessageHeader header;
-    CameraWorkerSpaceUpdate_DeleteLightSource delete_details;
+    CameraMessageHeader header = {0};
+    CameraWorkerSpaceUpdate_DeleteLightSource delete_details = {0};
     header.message_type = MSGTYPE_SPACE_UPDATE_DELETE_LIGHTSOURCE;
     delete_details.entity_id = entity_id;
     broadcast_to_pipes(write_fds, &header, sizeof(CameraMessageHeader));
