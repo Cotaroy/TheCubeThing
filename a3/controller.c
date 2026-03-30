@@ -7,14 +7,16 @@
 #include "controller.h"
 #define PI (3.14159265358979323846)
 
-void restore_original_settings(struct termios *og_settings) {
-    tcsetattr(STDIN_FILENO, TCSANOW, og_settings);
+struct termios og_settings;
+
+void restore_original_settings() {
+    tcsetattr(STDIN_FILENO, TCSANOW, &og_settings);
 }
 
-void setup_non_canonical(struct termios *og_settings) {
-    tcgetattr(STDIN_FILENO, og_settings);
+void setup_non_canonical() {
+    tcgetattr(STDIN_FILENO, &og_settings);
 
-    struct termios new_settings = *og_settings;
+    struct termios new_settings = og_settings;
 
     // disable all of these flags (bitwise or to conjoin the settings, not to make bitwise and turn them off)
     new_settings.c_lflag &= ~(ICANON); 
@@ -59,7 +61,7 @@ void handle_non_canonical_input(double *camera_x, double *camera_y, double *came
                 break;
             case 'l':
                 *camera_forward_azimuth -= STEP_TURN_DISTANCE_HORI;
-                if (*camera_forward_azimuth < 2 * PI) {
+                if (*camera_forward_azimuth < 0) {
                     *camera_forward_azimuth += 2 * PI;
                 }
                 break;

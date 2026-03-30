@@ -221,6 +221,7 @@ int terminal_height = 32;
 
 void cleanup_and_exit(int sig) { 
     terminal_exit_alt_screen();
+    restore_original_settings();
     exit(sig); // i don't know what exit code to use here
 }
 void update_window_size(int) {
@@ -253,8 +254,7 @@ int main() {
     update_window_size(SIGWINCH);
 
     // setup handling camera movement through user input
-    struct termios og_settings;
-    setup_non_canonical(&og_settings);
+    setup_non_canonical();
     double camera_x = -10;
     double camera_y = 0;
     double camera_z = 0;
@@ -300,7 +300,7 @@ int main() {
         map->height = terminal_height;
 
         handle_non_canonical_input(&camera_x, &camera_y, &camera_z, &camera_azimuth, &camera_inclination);
-        printf("(%f, %f, %f)\n", camera_x, camera_y, camera_z);
+        printf("(%f, %f, %f, %f, %f)\n", camera_x, camera_y, camera_z, camera_azimuth, camera_inclination);
 
 
         // broadcast_translate(space, write_fds, 2, 0, -3./60, 0);

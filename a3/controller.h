@@ -8,9 +8,11 @@
 #define STEP_TURN_DISTANCE_HORI 0.0245436926062
 #define STEP_TURN_DISTANCE_VERTI 0.0245436926062
 
-void restore_original_settings(struct termios *og_settings);
+extern struct termios og_settings;
 
-void setup_non_canonical(struct termios *og_settings);
+void restore_original_settings();
+
+void setup_non_canonical();
 
 // function for handling movement of the camera
 // precondition: setup_non_canonical was called earlier
