@@ -20,7 +20,7 @@ Triangle *create_triangle(double *v1, double *v2, double *v3) {
 }
 
 EntitySpace *create_space() {
-    EntitySpace *space = calloc(1, sizeof(EntitySpace));
+    EntitySpace *space = malloc(sizeof(EntitySpace));
     for (int i = 0; i < MAX_ENTITIES; i++) {
         space->entity_list[0] = NULL;
     }
@@ -471,8 +471,10 @@ void free_space(EntitySpace *entities) {
     Entity **entity_list = entities->entity_list;
 
     for (int i = 0; i < MAX_ENTITIES; i++) {
-        free_entity(entity_list[i]);
-        entity_list[i] = NULL;
+        if (entity_list[i] != NULL) {
+            free_entity(entity_list[i]);
+            entity_list[i] = NULL;
+        }
     }
     for (int i = 0; i < MAX_LIGHTS; i++) {
         free(entities->light_sources[i]);
