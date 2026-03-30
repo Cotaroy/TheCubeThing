@@ -120,7 +120,7 @@ void handle_non_canonical_input(double *camera_x, double *camera_y, double *came
             case ':':
                 enter_line_command_mode();
                 printf("Entered user command mode. <command_name> <parameter0> <parameter1> <...>\n");
-                parse_single_commnad();
+                parse_single_command();
                 exit_line_command_mode();
                 break;
         }
