@@ -45,6 +45,8 @@ void exit_line_command_mode() {
     current_settings.c_lflag &= ~ICANON;
     current_settings.c_cc[VMIN] = 0;
     current_settings.c_cc[VTIME] = 0;
+
+    tcsetattr(STDIN_FILENO, TCSANOW, &current_settings);
 }
 
 void handle_non_canonical_input(double *camera_x, double *camera_y, double *camera_z, double *camera_forward_azimuth, double *camera_forward_inclination) {
@@ -116,12 +118,14 @@ void handle_non_canonical_input(double *camera_x, double *camera_y, double *came
                 break;
             case ':':
                 enter_line_command_mode();
-                char string[30];
-                if (scanf("%s", string) == -1) {
+                printf("Entered user command mode. <command_name> <parameter0> <parameter1> <...>\n");
+                int a;
+                if (scanf("%d", &a) == -1) {
                     perror("scanf");
                     exit(1);
                 }
-                enter_line_command_mode();
+                exit_line_command_mode();
+                break;
         }
     }
 }
