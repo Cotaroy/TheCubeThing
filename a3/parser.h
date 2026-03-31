@@ -1,7 +1,7 @@
 #ifndef PARSER_H
 #define PARSER_H
 
-#define NUM_AVAILABLE_COMMAND_HANDLERS 7
+#define NUM_AVAILABLE_COMMAND_HANDLERS 6
 
 // read from standard in and execture commands accordingly
 int parse_single_command();

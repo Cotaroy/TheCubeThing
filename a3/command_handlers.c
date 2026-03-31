@@ -176,6 +176,34 @@ int __handle_command__translate(int argc, char **argv) {
     return 0;
 }
 
+int __handle_command__brighten(int argc, char **argv) {
+    if (argc < 3) {
+        printf("Syntax: %s <id> <delta_intensity>\n", argv[0]);
+        fflush(stdout);
+        return 1;
+    }
+
+    errno = 0;
+    int id = (int)strtol(argv[1], NULL, 10);
+    if (errno != 0) {
+        printf("You must specify a numeric ID.\n");
+        fflush(stdout);
+        return 1;
+    }
+
+    errno = 0;
+    double delta_intensity = strtod(argv[2], NULL);
+    if (errno != 0) {
+        printf("You must specify a numeric delta_intensity.\n");
+        fflush(stdout);
+        return 1;
+    }
+    
+    EntitySpace *space = get_space();
+    broadcast_brighten_light(space, id, delta_intensity);
+    return 0;
+}
+
 int __handle_command__rotate(int argc, char **argv) {
     if (argc < 5) {
         printf("Syntax: %s <e[ntity]|l[ight]> <id> <x|y|z (axis of rotation)> "
@@ -188,23 +216,23 @@ int __handle_command__rotate(int argc, char **argv) {
     errno = 0;
     int id = (int)strtol(argv[2], NULL, 10);
     if (errno != 0) {
-        printf("You must specify a numeric ID.");
+        printf("You must specify a numeric ID.\n");
         fflush(stdout);
         return 1;
     }
     if (argv[1][0] == 'e' && (id < 0 || id >= MAX_ENTITIES)) {
-        printf("invalid id");
+        printf("invalid id\n");
         fflush(stdout);
         return 1;
     }
     if (argv[1][0] == 'l' && (id < 0 || id >= MAX_LIGHTS)) {
-        printf("invalid id");
+        printf("invalid id\n");
         fflush(stdout);
         return 1;
     }
 
     if (argv[3][0] != 'x' && argv[3][0] != 'y' && argv[3][0] != 'z') {
-        printf("specify x, y, or z as axis of rotation.");
+        printf("specify x, y, or z as axis of rotation.\n");
         fflush(stdout);
         return 1;
     }
@@ -212,7 +240,7 @@ int __handle_command__rotate(int argc, char **argv) {
     errno = 0;
     double angle_in_degrees = strtod(argv[4], NULL);
     if (errno != 0) {
-        printf("Invalid angle.");
+        printf("Invalid angle.\n");
         fflush(stdout);
         return 1;
     }
@@ -222,7 +250,7 @@ int __handle_command__rotate(int argc, char **argv) {
     if (argv[1][0] == 'e') {
         Entity *entity = get_entity(space, id);
         if (entity == NULL) {
-            printf("unknown entity");
+            printf("unknown entity\n");
             fflush(stdout);
             return 1;
         }
@@ -238,11 +266,11 @@ int __handle_command__rotate(int argc, char **argv) {
                          entity->x_center,
                          entity->y_center,
                          entity->z_center);
-        printf("rotated entity");
+        printf("rotated entity\n");
     } else if (argv[1][0] == 'l') {
         LightSource *light = get_light(space, id);
         if (light == NULL) {
-            printf("unknown light");
+            printf("unknown light\n");
             fflush(stdout);
             return 1;
         }
@@ -257,9 +285,9 @@ int __handle_command__rotate(int argc, char **argv) {
                                light->x,
                                light->y,
                                light->z);
-        printf("rotated light");
+        printf("rotated light\n");
     } else {
-        printf("You must specify 'e' or 'l' for entity or light.");
+        printf("You must specify 'e' or 'l' for entity or light.\n");
         fflush(stdout);
         return 1;
     }
