@@ -2,6 +2,7 @@
 #define CAMERA_H
 
 #include <stdint.h>
+#include <sys/types.h>
 #include "space.h"
 #include "renderer.h"
 
