@@ -5,7 +5,7 @@
 #include <string.h>
 
 #define MAX_COMMAND_LENGTH 256
-#define MAX_COMMAND_ARGUMENT_COUNT 8
+#define MAX_COMMAND_ARGUMENT_COUNT 9
 
 static void end_string_before_line_feed(char *str) {
     char *line_feed_position = strchr(str, '\n');

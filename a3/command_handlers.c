@@ -9,17 +9,6 @@
 #include <string.h>
 #define PI (3.14159265358979323846)
 
-// int __handle_command__blank(int argc, char **argv) {
-//     // suppress unused variable warnings
-//     // because actually just don't need these
-//     (void)argc;
-//     (void)argv;
-
-//     // exit_line_command_mode();
-//     setup_non_canonical();
-//     return 0;
-// }
-
 int __handle_command__exit(int argc, char **argv) {
     // suppress unused variable warnings
     // because actually just don't need these
@@ -205,9 +194,9 @@ int __handle_command__brighten(int argc, char **argv) {
 }
 
 int __handle_command__rotate(int argc, char **argv) {
-    if (argc < 5) {
+    if (argc < 8) {
         printf("Syntax: %s <e[ntity]|l[ight]> <id> <x|y|z (axis of rotation)> "
-               "<angle in degrees counterclockwise>\n",
+               "<angle in degrees counterclockwise> <c[enter]|x_center> <c[enter]|y_center> <c[enter]|z_center>\n",
                argv[0]);
         fflush(stdout);
         return 1;
@@ -246,6 +235,7 @@ int __handle_command__rotate(int argc, char **argv) {
     }
     double angle_in_radians = PI * angle_in_degrees / 180;
 
+
     EntitySpace *space = get_space();
     if (argv[1][0] == 'e') {
         Entity *entity = get_entity(space, id);
@@ -253,6 +243,37 @@ int __handle_command__rotate(int argc, char **argv) {
             printf("unknown entity\n");
             fflush(stdout);
             return 1;
+        }
+
+        errno = 0;
+        double x_center = strtod(argv[5], NULL);
+        if (errno != 0 && argv[5][0] != 'c') {
+            printf("Invalid center of rotation.\n");
+            fflush(stdout);
+            return 1;
+        }
+        else if (argv[5][0] == 'c') {
+            x_center = entity->x_center;
+        }
+        errno = 0;
+        double y_center = strtod(argv[6], NULL);
+        if (errno != 0 && argv[6][0] != 'c') {
+            printf("Invalid center of rotation.\n");
+            fflush(stdout);
+            return 1;
+        }
+        else if (argv[6][0] == 'c') {
+            y_center = entity->y_center;
+        }
+        errno = 0;
+        double z_center = strtod(argv[7], NULL);
+        if (errno != 0 && argv[7][0] != 'c') {
+            printf("Invalid center of rotation.\n");
+            fflush(stdout);
+            return 1;
+        }
+        else if (argv[7][0] == 'c') {
+            z_center = entity->z_center;
         }
 
         uint8_t axis_of_rotation =
@@ -263,9 +284,9 @@ int __handle_command__rotate(int argc, char **argv) {
                          id,
                          axis_of_rotation,
                          angle_in_radians,
-                         entity->x_center,
-                         entity->y_center,
-                         entity->z_center);
+                         x_center,
+                         y_center,
+                         z_center);
         printf("rotated entity\n");
     } else if (argv[1][0] == 'l') {
         LightSource *light = get_light(space, id);
@@ -273,6 +294,36 @@ int __handle_command__rotate(int argc, char **argv) {
             printf("unknown light\n");
             fflush(stdout);
             return 1;
+        }
+        errno = 0;
+        double x_center = strtod(argv[5], NULL);
+        if (errno != 0 && argv[5][0] != 'c') {
+            printf("Invalid center of rotation.\n");
+            fflush(stdout);
+            return 1;
+        }
+        else if (argv[5][0] == 'c') {
+            x_center = light->x;
+        }
+        errno = 0;
+        double y_center = strtod(argv[6], NULL);
+        if (errno != 0 && argv[6][0] != 'c') {
+            printf("Invalid center of rotation.\n");
+            fflush(stdout);
+            return 1;
+        }
+        else if (argv[6][0] == 'c') {
+            y_center = light->y;
+        }
+        errno = 0;
+        double z_center = strtod(argv[7], NULL);
+        if (errno != 0 && argv[7][0] != 'c') {
+            printf("Invalid center of rotation.\n");
+            fflush(stdout);
+            return 1;
+        }
+        else if (argv[7][0] == 'c') {
+            z_center = light->z;
         }
         uint8_t axis_of_rotation =
             argv[3][0] == 'x'   ? MSGDETAIL_ROTATE_LIGHTSOURCE_AXIS_X
@@ -282,9 +333,9 @@ int __handle_command__rotate(int argc, char **argv) {
                                id,
                                axis_of_rotation,
                                angle_in_radians,
-                               light->x,
-                               light->y,
-                               light->z);
+                               x_center,
+                               y_center,
+                               z_center);
         printf("rotated light\n");
     } else {
         printf("You must specify 'e' or 'l' for entity or light.\n");
@@ -296,11 +347,119 @@ int __handle_command__rotate(int argc, char **argv) {
     return 0;
 }
 
+int __handle_command__create(int argc, char **argv) {
+    if (argc < 2) {
+        printf("Syntax for entity: create <e[ntity]> <id> <x_corner> <y_corner> <z_corner> <x_length> <y_length> <z_length>\n");
+        printf("Syntax for light : create <l[ight]> <id> <x_coord> <y_coord> <z_coord> <intensity>\n");
+        fflush(stdout);
+        return 1;
+    }
+    if (argv[1][0] == 'e' && argc < 9) {
+        printf("hi\n");
+        printf("Syntax for entity: create <e[ntity]> <id> <x_corner> <y_corner> <z_corner> <x_length> <y_length> <z_length>\n");
+        printf("Syntax for light : create <l[ight]> <id> <x_coord> <y_coord> <z_coord> <intensity>\n");
+        fflush(stdout);
+        return 1;
+    }
+    if (argv[1][0] == 'l' && argc < 7) {
+        printf("Syntax for entity: create <e[ntity]> <id> <x_corner> <y_corner> <z_corner> <x_length> <y_length> <z_length>\n");
+        printf("Syntax for light : create <l[ight]> <id> <x_coord> <y_coord> <z_coord> <intensity>\n");
+        fflush(stdout);
+        return 1;
+    }
+
+    errno = 0;
+    int id = (int)strtol(argv[2], NULL, 10);
+    if (errno != 0) {
+        printf("You must specify a numeric ID.\n");
+        fflush(stdout);
+        return 1;
+    }
+    if (argv[1][0] == 'e' && (id < 0 || id >= MAX_ENTITIES)) {
+        printf("invalid id\n");
+        fflush(stdout);
+        return 1;
+    }
+    if (argv[1][0] == 'l' && (id < 0 || id >= MAX_LIGHTS)) {
+        printf("invalid id\n");
+        fflush(stdout);
+        return 1;
+    }
+
+    errno = 0;
+    double x_coord = strtod(argv[3], NULL);
+    if (errno != 0) {
+        printf("Invalid x coordinate.\n");
+        fflush(stdout);
+        return 1;
+    }
+    errno = 0;
+    double y_coord = strtod(argv[4], NULL);
+    if (errno != 0) {
+        printf("Invalid y coordinate.\n");
+        fflush(stdout);
+        return 1;
+    }
+    errno = 0;
+    double z_coord = strtod(argv[5], NULL);
+    if (errno != 0) {
+        printf("Invalid z coordinate.\n");
+        fflush(stdout);
+        return 1;
+    }
+
+    if (argv[1][0] == 'e') {
+
+        errno = 0;
+        double x_len = strtod(argv[6], NULL);
+        if (errno != 0) {
+            printf("Invalid x side length.\n");
+            fflush(stdout);
+            return 1;
+        }
+        errno = 0;
+        double y_len = strtod(argv[7], NULL);
+        if (errno != 0) {
+            printf("Invalid y side length.\n");
+            fflush(stdout);
+            return 1;
+        }
+        errno = 0;
+        double z_len = strtod(argv[8], NULL);
+        if (errno != 0) {
+            printf("Invalid z side length.\n");
+            fflush(stdout);
+            return 1;
+        }
+        EntitySpace *space = get_space();
+        broadcast_create_entity(space, id, x_coord, y_coord, z_coord, x_len, y_len, z_len);
+        printf("created entity\n");
+        return 0;
+    }
+
+    else if (argv[1][0] == 'l') {
+        errno = 0;
+        double intensity = strtod(argv[6], NULL);
+        if (errno != 0) {
+            printf("Invalid intensity\n");
+            fflush(stdout);
+            return 1;
+        }
+
+        EntitySpace *space = get_space();
+        broadcast_create_light_source(space, id, x_coord, y_coord, z_coord, intensity);
+        printf("created light\n");
+        return 0;
+    }
+
+    else {
+        printf("You must specify 'e' or 'l' for entity or light.\n");
+        fflush(stdout);
+        return 1;
+    }
+}
+
 CommandHandler __command_handlers[NUM_AVAILABLE_COMMAND_HANDLERS] = {
-    // (CommandHandler){
-    //     .command_name = "",
-    //     .handle_command = __handle_command__blank,
-    // },
     (CommandHandler){
         .command_name = "exit",
         .handle_command = __handle_command__exit,
@@ -325,6 +484,10 @@ CommandHandler __command_handlers[NUM_AVAILABLE_COMMAND_HANDLERS] = {
         .command_name = "rotate",
         .handle_command = __handle_command__rotate,
     },
+    (CommandHandler){
+        .command_name = "create",
+        .handle_command = __handle_command__create,
+    }
 };
 
 CommandHandler *get_command_handler(char *command_name) {
