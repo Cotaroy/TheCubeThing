@@ -1,3 +1,4 @@
+#include "camera.h"
 #include "controller.h"
 #include "manager.h"
 #include "parser.h"
@@ -6,6 +7,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#define PI (3.14159265358979323846)
 
 // int __handle_command__blank(int argc, char **argv) {
 //     // suppress unused variable warnings
@@ -104,7 +106,9 @@ int __handle_command__delete(int argc, char **argv) {
 
 int __handle_command__translate(int argc, char **argv) {
     if (argc < 6) {
-        printf("Syntax: %s <e[ntity]|l[ight]> <id> <x offset> <y offset> <z offset>", argv[0]);
+        printf("Syntax: %s <e[ntity]|l[ight]> <id> <x offset> <y offset> <z "
+               "offset>",
+               argv[0]);
         fflush(stdout);
         return 1;
     }
@@ -126,7 +130,7 @@ int __handle_command__translate(int argc, char **argv) {
     double x_offset = strtod(argv[3], NULL);
     double y_offset = strtod(argv[4], NULL);
     double z_offset = strtod(argv[5], NULL);
-    if(errno != 0) {
+    if (errno != 0) {
         printf("Invalid x, y, or z offset.");
         fflush(stdout);
         return 1;
@@ -135,7 +139,7 @@ int __handle_command__translate(int argc, char **argv) {
     EntitySpace *space = get_space();
     if (argv[1][0] == 'e') {
         Entity *entity = get_entity(space, id);
-        if(entity == NULL) {
+        if (entity == NULL) {
             printf("unknown entity");
             fflush(stdout);
             return 1;
@@ -152,6 +156,98 @@ int __handle_command__translate(int argc, char **argv) {
         translate_light(light, x_offset, y_offset, z_offset);
         broadcast_translate_light(space, id, x_offset, y_offset, z_offset);
         printf("translated light");
+    } else {
+        printf("You must specify 'e' or 'l' for entity or light.");
+        fflush(stdout);
+        return 1;
+    }
+
+    fflush(stdout);
+    return 0;
+}
+
+int __handle_command__rotate(int argc, char **argv) {
+    if (argc < 5) {
+        printf("Syntax: %s <e[ntity]|l[ight]> <id> <x|y|z (axis of rotation)> "
+               "<angle in degrees counterclockwise>",
+               argv[0]);
+        fflush(stdout);
+        return 1;
+    }
+
+    errno = 0;
+    int id = (int)strtol(argv[2], NULL, 10);
+    if (errno != 0) {
+        printf("You must specify a numeric ID.");
+        fflush(stdout);
+        return 1;
+    }
+    if (argv[1][0] == 'e' && (id < 0 || id >= MAX_ENTITIES)) {
+        printf("invalid id");
+        fflush(stdout);
+        return 1;
+    }
+    if (argv[1][0] == 'l' && (id < 0 || id >= MAX_LIGHTS)) {
+        printf("invalid id");
+        fflush(stdout);
+        return 1;
+    }
+
+    if (argv[3][0] != 'x' && argv[3][0] != 'y' && argv[3][0] != 'z') {
+        printf("specify x, y, or z as axis of rotation.");
+        fflush(stdout);
+        return 1;
+    }
+
+    errno = 0;
+    double angle_in_degrees = strtod(argv[4], NULL);
+    if (errno != 0) {
+        printf("Invalid angle.");
+        fflush(stdout);
+        return 1;
+    }
+    double angle_in_radians = PI * angle_in_degrees / 180;
+
+    EntitySpace *space = get_space();
+    if (argv[1][0] == 'e') {
+        Entity *entity = get_entity(space, id);
+        if (entity == NULL) {
+            printf("unknown entity");
+            fflush(stdout);
+            return 1;
+        }
+
+        uint8_t axis_of_rotation =
+            argv[3][0] == 'x'   ? MSGDETAIL_ROTATE_ENTITY_AXIS_X
+            : argv[3][0] == 'y' ? MSGDETAIL_ROTATE_ENTITY_AXIS_Y
+                                : MSGDETAIL_ROTATE_ENTITY_AXIS_Z;
+        broadcast_rotate(space,
+                         id,
+                         axis_of_rotation,
+                         angle_in_radians,
+                         entity->x_center,
+                         entity->y_center,
+                         entity->z_center);
+        printf("rotated entity");
+    } else if (argv[1][0] == 'l') {
+        LightSource *light = get_light(space, id);
+        if (light == NULL) {
+            printf("unknown light");
+            fflush(stdout);
+            return 1;
+        }
+        uint8_t axis_of_rotation =
+            argv[3][0] == 'x'   ? MSGDETAIL_ROTATE_LIGHTSOURCE_AXIS_X
+            : argv[3][0] == 'y' ? MSGDETAIL_ROTATE_LIGHTSOURCE_AXIS_Y
+                                : MSGDETAIL_ROTATE_LIGHTSOURCE_AXIS_Z;
+        broadcast_rotate_light(space,
+                               id,
+                               axis_of_rotation,
+                               angle_in_radians,
+                               light->x,
+                               light->y,
+                               light->z);
+        printf("rotated light");
     } else {
         printf("You must specify 'e' or 'l' for entity or light.");
         fflush(stdout);
@@ -182,6 +278,10 @@ CommandHandler __command_handlers[NUM_AVAILABLE_COMMAND_HANDLERS] = {
     (CommandHandler){
         .command_name = "translate",
         .handle_command = __handle_command__translate,
+    },
+    (CommandHandler){
+        .command_name = "rotate",
+        .handle_command = __handle_command__rotate,
     },
 };
 
