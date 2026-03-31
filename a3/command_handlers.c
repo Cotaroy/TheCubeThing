@@ -54,11 +54,12 @@ int __handle_command__list(int argc, char **argv) {
         if (light == NULL) {
             continue;
         }
-        printf("[light  %d] at (%.1f, %.1f, %.1f)\n",
+        printf("[light  %d] at (%.1f, %.1f, %.1f, %.1f)\n",
                light_id,
                light->x,
                light->y,
-               light->z);
+               light->z,
+               light->intensity);
     }
 
     fflush(stdout); // force the printed stuff to go to the terminal immediately
@@ -127,7 +128,7 @@ int __handle_command__translate(int argc, char **argv) {
     double y_offset = strtod(argv[4], NULL);
     double z_offset = strtod(argv[5], NULL);
     if(errno != 0) {
-        printf("Invalid x, y, or z offset.");
+        printf("Invalid x, y, or z offset.\n");
         fflush(stdout);
         return 1;
     }
@@ -135,40 +136,73 @@ int __handle_command__translate(int argc, char **argv) {
     EntitySpace *space = get_space();
     if (argv[1][0] == 'e') {
         if (id < 0 || id >= MAX_ENTITIES) {
-            printf("invalid id");
+            printf("invalid id\b");
             fflush(stdout);
             return 1;
         }
         Entity *entity = get_entity(space, id);
         if(entity == NULL) {
-            printf("unknown entity");
+            printf("unknown entity\n");
             fflush(stdout);
             return 1;
         }
         broadcast_translate(space, id, x_offset, y_offset, z_offset);
-        printf("translated entity");
+        printf("translated entity\n");
     } else if (argv[1][0] == 'l') {
         if (id < 0 || id >= MAX_LIGHTS) {
-            printf("invalid id");
+            printf("invalid id\n");
             fflush(stdout);
             return 1;
         }
         LightSource *light = get_light(space, id);
         if (light == NULL) {
-            printf("unknown light");
+            printf("unknown light\n");
             fflush(stdout);
             return 1;
         }
-        translate_light(light, x_offset, y_offset, z_offset);
         broadcast_translate_light(space, id, x_offset, y_offset, z_offset);
-        printf("translated light");
+        printf("translated light\n");
     } else {
-        printf("You must specify 'e' or 'l' for entity or light.");
+        printf("You must specify 'e' or 'l' for entity or light.\n");
         fflush(stdout);
         return 1;
     }
 
     fflush(stdout);
+    return 0;
+}
+
+int __handle_command__brighten(int argc, char **argv) {
+
+    if (argc < 3) {
+        printf("Syntax: %s <id> <delta_intensity>\n", argv[0]);
+        fflush(stdout);
+        return 1;
+    }
+
+    errno = 0;
+    int id = (int)strtol(argv[1], NULL, 10);
+    if (errno != 0) {
+        printf("You must specify a numeric ID.\n");
+        fflush(stdout);
+        return 1;
+    }
+    errno = 0;
+    double delta_intensity = strtod(argv[2], NULL);
+    if (errno != 0) {
+        printf("You must specify a numeric double.\n");
+        fflush(stdout);
+        return 1;
+    }
+    if (id < 0 || id >= MAX_LIGHTS) {
+        printf("invalid id\n");
+        fflush(stdout);
+        return 1;
+    }
+    
+    EntitySpace *space = get_space();
+    broadcast_brighten_light(space, id, delta_intensity);
+    printf("brightened light\n");
     return 0;
 }
 
@@ -192,6 +226,10 @@ CommandHandler __command_handlers[NUM_AVAILABLE_COMMAND_HANDLERS] = {
     (CommandHandler){
         .command_name = "translate",
         .handle_command = __handle_command__translate,
+    },
+    (CommandHandler){
+        .command_name = "brighten",
+        .handle_command = __handle_command__brighten,
     },
 };
 
