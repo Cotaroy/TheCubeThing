@@ -18,4 +18,6 @@ void setup_non_canonical();
 // precondition: setup_non_canonical was called earlier
 void handle_non_canonical_input(double *camera_x, double *camera_y, double *camera_z, double *camera_forward_azimuth, double *camera_forward_inclination);
 
+void exit_line_command_mode();
+
 #endif
