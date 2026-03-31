@@ -2,6 +2,7 @@
 #include <termios.h>
 #include <unistd.h>
 #include <stdlib.h>
+#include "ansi_escape_sequences.h"
 #include "manager.h"
 #include "math.h"
 #include "controller.h"
@@ -37,6 +38,7 @@ void enter_line_command_mode() {
     current_settings.c_lflag |= ICANON;
 
     tcsetattr(STDIN_FILENO, TCSANOW, &current_settings);
+    printf(ESC_MAKE_CURSOR_VISIBLE);
 }
 
 void exit_line_command_mode() {
@@ -48,6 +50,7 @@ void exit_line_command_mode() {
     current_settings.c_cc[VTIME] = 0;
 
     tcsetattr(STDIN_FILENO, TCSANOW, &current_settings);
+    printf(ESC_MAKE_CURSOR_INVISIBLE);
 }
 
 void handle_non_canonical_input(double *camera_x, double *camera_y, double *camera_z, double *camera_forward_azimuth, double *camera_forward_inclination) {
@@ -58,6 +61,7 @@ void handle_non_canonical_input(double *camera_x, double *camera_y, double *came
             perror("failed to read user movement input");
             exit(1);
         }
+        exit_line_command_mode();
         switch (input_char) {
             case 'w':
                 *camera_x += cos(*camera_forward_azimuth) * sin(*camera_forward_inclination) * STEP_DISTANCE;
@@ -119,10 +123,13 @@ void handle_non_canonical_input(double *camera_x, double *camera_y, double *came
                 break;
             case ':':
                 enter_line_command_mode();
-                printf("Entered user command mode. <command_name> <parameter0> <parameter1> <...>\n");
+                printf("Entered user command mode. <command_name> <parameter0> "
+                       "<parameter1> <...>\n");
+
                 parse_single_command();
-                exit_line_command_mode();
+
+                // exit_line_command_mode();
                 break;
-        }
+            }
     }
 }

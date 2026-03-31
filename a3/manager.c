@@ -27,8 +27,16 @@
 #define FILM_MAX_WIDTH  (256)
 #define FILM_MAX_HEIGHT (256)
 
+// the state of the scene
+static EntitySpace *space;
+static int write_fds[NUM_WORKERS];
 
-void broadcast_to_pipes(int *write_fds, void *source_buffer, size_t nbytes) {
+/**
+ * get a pointer to the space that is being rendered right now
+ */
+EntitySpace *get_space() { return space; }
+
+void broadcast_to_pipes(void *source_buffer, size_t nbytes) {
     for (int i = 0; i < NUM_WORKERS; i++) {
 
         // printf("writing to [%d]\n", i);
@@ -40,12 +48,7 @@ void broadcast_to_pipes(int *write_fds, void *source_buffer, size_t nbytes) {
     }
 }
 
-void broadcast_translate(EntitySpace *space, int *write_fds, int entity_id, double x_offset, double y_offset, double z_offset) {
-    if (entity_id < 0 || entity_id >= MAX_ENTITIES) {
-        fprintf(stderr, "Provided invalid entity_id (%d), out of bounds.\n", entity_id);
-        return;
-    }
-
+void broadcast_translate(EntitySpace *space, int entity_id, double x_offset, double y_offset, double z_offset) {
     Entity *entity = get_entity(space, entity_id);
 
     if (entity == NULL) {
@@ -62,11 +65,11 @@ void broadcast_translate(EntitySpace *space, int *write_fds, int entity_id, doub
     translation_details.x_offset = x_offset;
     translation_details.y_offset = y_offset;
     translation_details.z_offset = z_offset;
-    broadcast_to_pipes(write_fds, &header, sizeof(CameraMessageHeader));
-    broadcast_to_pipes(write_fds, &translation_details, sizeof(CameraWorkerSpaceUpdate_TranslateEntity));
+    broadcast_to_pipes(&header, sizeof(CameraMessageHeader));
+    broadcast_to_pipes(&translation_details, sizeof(CameraWorkerSpaceUpdate_TranslateEntity));
 }
 
-void broadcast_rotate(EntitySpace *space, int *write_fds, int entity_id, uint8_t axis_of_rotation, double angle, double x_center, double y_center, double z_center) {
+void broadcast_rotate(EntitySpace *space, int entity_id, uint8_t axis_of_rotation, double angle, double x_center, double y_center, double z_center) {
 
     if (entity_id < 0 || entity_id >= MAX_ENTITIES) {
         fprintf(stderr, "Provided invalid entity_id (%d), out of bounds.\n", entity_id);
@@ -87,8 +90,8 @@ void broadcast_rotate(EntitySpace *space, int *write_fds, int entity_id, uint8_t
     rotation_details.x_center = x_center;
     rotation_details.y_center = y_center;
     rotation_details.z_center = z_center;
-    broadcast_to_pipes(write_fds, &header, sizeof(CameraMessageHeader));
-    broadcast_to_pipes(write_fds, &rotation_details, sizeof(CameraWorkerSpaceUpdate_RotateEntity));
+    broadcast_to_pipes(&header, sizeof(CameraMessageHeader));
+    broadcast_to_pipes(&rotation_details, sizeof(CameraWorkerSpaceUpdate_RotateEntity));
     
     if (axis_of_rotation == MSGDETAIL_ROTATE_ENTITY_AXIS_X) {
         rotate_x(entity, angle, x_center, y_center, z_center);
@@ -101,11 +104,7 @@ void broadcast_rotate(EntitySpace *space, int *write_fds, int entity_id, uint8_t
     }
 }
 
-void broadcast_translate_light(EntitySpace *space, int *write_fds, int entity_id, double x_offset, double y_offset, double z_offset) {
-    if (entity_id < 0 || entity_id >= MAX_LIGHTS) {
-        fprintf(stderr, "Provided invalid entity_id (%d), out of bounds.\n", entity_id);
-        return;
-    }
+void broadcast_translate_light(EntitySpace *space, int entity_id, double x_offset, double y_offset, double z_offset) {
     LightSource *entity = get_light(space, entity_id);
 
     if (entity == NULL) {
@@ -120,17 +119,13 @@ void broadcast_translate_light(EntitySpace *space, int *write_fds, int entity_id
     translation_details.x_offset = x_offset;
     translation_details.y_offset = y_offset;
     translation_details.z_offset = z_offset;
-    broadcast_to_pipes(write_fds, &header, sizeof(CameraMessageHeader));
-    broadcast_to_pipes(write_fds, &translation_details, sizeof(CameraWorkerSpaceUpdate_TranslateLightSource));
+    broadcast_to_pipes(&header, sizeof(CameraMessageHeader));
+    broadcast_to_pipes(&translation_details, sizeof(CameraWorkerSpaceUpdate_TranslateLightSource));
 
     translate_light(entity, x_offset, y_offset, z_offset);
 }
 
-void broadcast_rotate_light(EntitySpace *space, int *write_fds, int entity_id, uint8_t axis_of_rotation, double angle, double x_center, double y_center, double z_center) {
-    if (entity_id < 0 || entity_id >= MAX_LIGHTS) {
-        fprintf(stderr, "Provided invalid entity_id (%d), out of bounds.\n", entity_id);
-        return;
-    }
+void broadcast_rotate_light(EntitySpace *space, int entity_id, uint8_t axis_of_rotation, double angle, double x_center, double y_center, double z_center) {
     LightSource *entity = get_light(space, entity_id);
 
     if (entity == NULL) {
@@ -147,8 +142,8 @@ void broadcast_rotate_light(EntitySpace *space, int *write_fds, int entity_id, u
     rotation_details.x_center = x_center;
     rotation_details.y_center = y_center;
     rotation_details.z_center = z_center;
-    broadcast_to_pipes(write_fds, &header, sizeof(CameraMessageHeader));
-    broadcast_to_pipes(write_fds, &rotation_details, sizeof(CameraWorkerSpaceUpdate_RotateLightSource));
+    broadcast_to_pipes(&header, sizeof(CameraMessageHeader));
+    broadcast_to_pipes(&rotation_details, sizeof(CameraWorkerSpaceUpdate_RotateLightSource));
     
     if (axis_of_rotation == MSGDETAIL_ROTATE_LIGHTSOURCE_AXIS_X) {
         rotate_x_light(entity, angle, x_center, y_center, z_center);
@@ -161,11 +156,7 @@ void broadcast_rotate_light(EntitySpace *space, int *write_fds, int entity_id, u
     }
 }
 
-void broadcast_brighten_light(EntitySpace *space, int *write_fds, int entity_id, double delta_intensity) {
-    if (entity_id < 0 || entity_id >= MAX_LIGHTS) {
-        fprintf(stderr, "Provided invalid entity_id (%d), out of bounds.\n", entity_id);
-        return;
-    }
+void broadcast_brighten_light(EntitySpace *space, int entity_id, double delta_intensity) {
     LightSource *source = get_light(space, entity_id);
 
     if (source == NULL) {
@@ -178,25 +169,21 @@ void broadcast_brighten_light(EntitySpace *space, int *write_fds, int entity_id,
     header.message_type = MSGTYPE_SPACE_UPDATE_BRIGHTEN_LIGHTSOURCE;
     brighten_details.entity_id = entity_id;
     brighten_details.delta_intensity = delta_intensity;
-    broadcast_to_pipes(write_fds, &header, sizeof(CameraMessageHeader));
-    broadcast_to_pipes(write_fds, &brighten_details, sizeof(CameraWorkerSpaceUpdate_BrightenLightSource));
+    broadcast_to_pipes(&header, sizeof(CameraMessageHeader));
+    broadcast_to_pipes(&brighten_details, sizeof(CameraWorkerSpaceUpdate_BrightenLightSource));
 
     brighten(source, delta_intensity);
 }
 
-Entity *broadcast_create_entity(EntitySpace *space, int *write_fds, int entity_id, double x_corner, double y_corner, double z_corner, double x_length, double y_length, double z_length) {
-    if (entity_id < 0 || entity_id >= MAX_ENTITIES) {
-        fprintf(stderr, "Provided invalid entity_id (%d), out of bounds.\n", entity_id);
-        return NULL;
-    }
+Entity *broadcast_create_entity(EntitySpace *space, int entity_id, double x_corner, double y_corner, double z_corner, double x_length, double y_length, double z_length) {
     CameraMessageHeader header = {0};
     CameraWorkerSpaceUpdate_NewEntity new_details = {0};
     header.message_type = MSGTYPE_SPACE_UPDATE_NEW_ENTITY;
     new_details.entity_id = entity_id;
     new_details.corner_coord[0] = x_corner; new_details.corner_coord[1] = y_corner; new_details.corner_coord[2] = z_corner;
     new_details.side_lengths[0] = x_length; new_details.side_lengths[1] = y_length; new_details.side_lengths[2] = z_length;
-    broadcast_to_pipes(write_fds, &header, sizeof(CameraMessageHeader));
-    broadcast_to_pipes(write_fds, &new_details, sizeof(CameraWorkerSpaceUpdate_NewEntity));
+    broadcast_to_pipes(&header, sizeof(CameraMessageHeader));
+    broadcast_to_pipes(&new_details, sizeof(CameraWorkerSpaceUpdate_NewEntity));
 
     Entity *entity = create_rectangle(x_corner, y_corner, z_corner, x_length, y_length, z_length);
     add_to_entity_space(space, entity, entity_id);
@@ -204,19 +191,15 @@ Entity *broadcast_create_entity(EntitySpace *space, int *write_fds, int entity_i
     return entity;
 }
 
-LightSource *broadcast_create_light_source(EntitySpace *space, int *write_fds, int entity_id, double x, double y, double z, double intensity) {
-    if (entity_id < 0 || entity_id >= MAX_LIGHTS) {
-        fprintf(stderr, "Provided invalid entity_id (%d), out of bounds.\n", entity_id);
-        return NULL;
-    }
+LightSource *broadcast_create_light_source(EntitySpace *space, int entity_id, double x, double y, double z, double intensity) {
     CameraMessageHeader header = {0};
     CameraWorkerSpaceUpdate_NewLightSource new_details = {0};
     header.message_type = MSGTYPE_SPACE_UPDATE_NEW_LIGHTSOURCE;
     new_details.entity_id = entity_id;
     new_details.coord[0] = x; new_details.coord[1] = y; new_details.coord[2] = z;
     new_details.intensity = intensity;
-    broadcast_to_pipes(write_fds, &header, sizeof(CameraMessageHeader));
-    broadcast_to_pipes(write_fds, &new_details, sizeof(CameraWorkerSpaceUpdate_NewLightSource));
+    broadcast_to_pipes(&header, sizeof(CameraMessageHeader));
+    broadcast_to_pipes(&new_details, sizeof(CameraWorkerSpaceUpdate_NewLightSource));
 
     LightSource *source = create_light_source(x, y, z, intensity);
     add_light_to_entity_space(space, source, entity_id);
@@ -224,32 +207,24 @@ LightSource *broadcast_create_light_source(EntitySpace *space, int *write_fds, i
     return source;
 }
 
-void broadcast_delete_entity(EntitySpace *space, int *write_fds, int entity_id) {
-    if (entity_id < 0 || entity_id >= MAX_ENTITIES) {
-        fprintf(stderr, "Provided invalid entity_id (%d), out of bounds.\n", entity_id);
-        return;
-    }
+void broadcast_delete_entity(EntitySpace *space, int entity_id) {
     CameraMessageHeader header = {0};
     CameraWorkerSpaceUpdate_DeleteEntity delete_details = {0};
     header.message_type = MSGTYPE_SPACE_UPDATE_DELETE_ENTITY;
     delete_details.entity_id = entity_id;
-    broadcast_to_pipes(write_fds, &header, sizeof(CameraMessageHeader));
-    broadcast_to_pipes(write_fds, &delete_details, sizeof(CameraWorkerSpaceUpdate_DeleteEntity));
+    broadcast_to_pipes(&header, sizeof(CameraMessageHeader));
+    broadcast_to_pipes(&delete_details, sizeof(CameraWorkerSpaceUpdate_DeleteEntity));
 
     delete_from_entity_space(space, entity_id);
 }
 
-void broadcast_delete_light_source(EntitySpace *space, int *write_fds, int entity_id) {
-    if (entity_id < 0 || entity_id >= MAX_ENTITIES) {
-        fprintf(stderr, "Provided invalid entity_id (%d), out of bounds.\n", entity_id);
-        return;
-    }
+void broadcast_delete_light_source(EntitySpace *space, int entity_id) {
     CameraMessageHeader header = {0};
     CameraWorkerSpaceUpdate_DeleteLightSource delete_details = {0};
     header.message_type = MSGTYPE_SPACE_UPDATE_DELETE_LIGHTSOURCE;
     delete_details.entity_id = entity_id;
-    broadcast_to_pipes(write_fds, &header, sizeof(CameraMessageHeader));
-    broadcast_to_pipes(write_fds, &delete_details, sizeof(CameraWorkerSpaceUpdate_DeleteLightSource));
+    broadcast_to_pipes(&header, sizeof(CameraMessageHeader));
+    broadcast_to_pipes(&delete_details, sizeof(CameraWorkerSpaceUpdate_DeleteLightSource));
 
     delete_light_from_entity_space(space, entity_id);
 }
@@ -300,12 +275,12 @@ int main() {
     double camera_inclination = PI/2;
 
     // build the scene
-    EntitySpace *space = create_space();
+    space = create_space();
 
     // spawn the workers
     pid_t pids[NUM_WORKERS];
     int read_fds[NUM_WORKERS];
-    int write_fds[NUM_WORKERS];
+    // int write_fds[NUM_WORKERS];
     spawn_camera_workers(pids, read_fds, write_fds, NUM_WORKERS, space);
 
     // create the film to capture the image on
@@ -316,16 +291,16 @@ int main() {
 
     terminal_enter_alt_screen();
 
-    Entity *cube1 = broadcast_create_entity(space, write_fds, 0, -.5, -.5, -.5, 1, 1, 1);
-    broadcast_create_light_source(space, write_fds, 0, 0, 0, 2, 1000);
-    broadcast_create_light_source(space, write_fds, 1, 0, 0, -2, 1000);
-    broadcast_create_light_source(space, write_fds, 2, 2, 0, 0, 1000);
-    broadcast_create_light_source(space, write_fds, 3, -2, 0, 0, 1000);
-    broadcast_create_light_source(space, write_fds, 4, 0, 2, 0, 1000);
-    broadcast_create_light_source(space, write_fds, 5, 0, -2, 0, 1000);
+    Entity *cube1 = broadcast_create_entity(space, 0, -.5, -.5, -.5, 1, 1, 1);
+    broadcast_create_light_source(space, 0, 0, 0, 2, 1000);
+    broadcast_create_light_source(space, 1, 0, 0, -2, 1000);
+    broadcast_create_light_source(space, 2, 2, 0, 0, 1000);
+    broadcast_create_light_source(space, 3, -2, 0, 0, 1000);
+    broadcast_create_light_source(space, 4, 0, 2, 0, 1000);
+    broadcast_create_light_source(space, 5, 0, -2, 0, 1000);
 
     // render some stuff
-    for (int i = 0; i < 100; i++) {
+    while (1) {
         /*
             Assumption:
             Between frames, the pipes used to write to the children
@@ -353,9 +328,11 @@ int main() {
         // broadcast_rotate_light(space, write_fds, 0, MSGDETAIL_ROTATE_LIGHTSOURCE_AXIS_Y, PI/32, cube1->x_center, cube1->y_center, cube1->z_center);
         // broadcast_rotate_light(space, write_fds, 0, MSGDETAIL_ROTATE_LIGHTSOURCE_AXIS_Z, PI/32, 0, 0, 0);
     
-        broadcast_rotate(space, write_fds, 0, MSGDETAIL_ROTATE_ENTITY_AXIS_X, -PI/64, cube1->x_center, cube1->y_center, cube1->z_center);
-        broadcast_rotate(space, write_fds, 0, MSGDETAIL_ROTATE_ENTITY_AXIS_Y, -PI/64, cube1->x_center, cube1->y_center, cube1->z_center);
-        broadcast_rotate(space, write_fds, 0, MSGDETAIL_ROTATE_ENTITY_AXIS_Z, -PI/64, cube1->x_center, cube1->y_center, cube1->z_center);
+        if(get_entity(space, 0) != NULL) {
+            broadcast_rotate(space, 0, MSGDETAIL_ROTATE_ENTITY_AXIS_X, -PI/64, cube1->x_center, cube1->y_center, cube1->z_center);
+            broadcast_rotate(space, 0, MSGDETAIL_ROTATE_ENTITY_AXIS_Y, -PI/64, cube1->x_center, cube1->y_center, cube1->z_center);
+            broadcast_rotate(space, 0, MSGDETAIL_ROTATE_ENTITY_AXIS_Z, -PI/64, cube1->x_center, cube1->y_center, cube1->z_center);
+        }
 
         capture_image(
             map,

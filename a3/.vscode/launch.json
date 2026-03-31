@@ -8,7 +8,7 @@
             "name": "(gdb) manager",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/a3/manager",
+            "program": "${workspaceFolder}/manager",
             "args": [],
             "stopAtEntry": false,
             "cwd": "${fileDirname}",
@@ -25,11 +25,11 @@
                     "description": "Set Disassembly Flavor to Intel",
                     "text": "-gdb-set disassembly-flavor intel",
                     "ignoreFailures": true
-                },
-                {
-                    "description": "follow fork child",
-                    "text": "-gdb-set follow-fork-mode child"
-                }
+                }// ,
+                // {
+                //     "description": "follow fork child",
+                //     "text": "-gdb-set follow-fork-mode child"
+                // }
             ]
         }
     ]
