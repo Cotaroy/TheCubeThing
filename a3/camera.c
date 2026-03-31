@@ -153,7 +153,7 @@ void camera_worker_work(
             result.image_x = task.image_x;
             result.image_y = task.image_y;
             result.distance = distance;
-            if (write(fd_write, &result, sizeof(result)) <= 0) {
+            if (write_safely(fd_write, &result, sizeof(result)) <= 0) {
                 perror("child write");
                 exit(1);
             }
