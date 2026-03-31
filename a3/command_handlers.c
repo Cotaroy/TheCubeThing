@@ -69,7 +69,7 @@ int __handle_command__list(int argc, char **argv) {
 
 int __handle_command__delete(int argc, char **argv) {
     if (argc < 3) {
-        printf("Syntax: %s <e[ntity]|l[ight]> <id>", argv[0]);
+        printf("Syntax: %s <e[ntity]|l[ight]> <id>\n", argv[0]);
         fflush(stdout);
         return 1;
     }
@@ -77,25 +77,30 @@ int __handle_command__delete(int argc, char **argv) {
     errno = 0;
     int id = (int)strtol(argv[2], NULL, 10);
     if (errno != 0) {
-        printf("You must specify a numeric ID.");
-        fflush(stdout);
-        return 1;
-    }
-    if (id < 0 || id >= MAX_ENTITIES) {
-        printf("invalid id");
+        printf("You must specify a numeric ID.\n");
         fflush(stdout);
         return 1;
     }
 
     EntitySpace *space = get_space();
     if (argv[1][0] == 'e') {
+        if (id < 0 || id >= MAX_ENTITIES) {
+            printf("invalid id\n");
+            fflush(stdout);
+            return 1;
+        }
         broadcast_delete_entity(space, id);
-        printf("deleted entity %d", id);
+        printf("deleted entity %d\n", id);
     } else if (argv[1][0] == 'l') {
+        if (id < 0 || id >= MAX_LIGHTS) {
+            printf("invalid id\n");
+            fflush(stdout);
+            return 1;
+        }
         broadcast_delete_light_source(space, id);
-        printf("deleted light %d", id);
+        printf("deleted light %d\n", id);
     } else {
-        printf("You must specify 'e' or 'l' for entity or light.");
+        printf("You must specify 'e' or 'l' for entity or light.\n");
         fflush(stdout);
         return 1;
     }
@@ -116,12 +121,7 @@ int __handle_command__translate(int argc, char **argv) {
     errno = 0;
     int id = (int)strtol(argv[2], NULL, 10);
     if (errno != 0) {
-        printf("You must specify a numeric ID.");
-        fflush(stdout);
-        return 1;
-    }
-    if (id < 0 || id >= MAX_ENTITIES) {
-        printf("invalid id");
+        printf("You must specify a numeric ID.\n");
         fflush(stdout);
         return 1;
     }
@@ -138,6 +138,11 @@ int __handle_command__translate(int argc, char **argv) {
 
     EntitySpace *space = get_space();
     if (argv[1][0] == 'e') {
+        if (id < 0 || id >= MAX_ENTITIES) {
+            printf("invalid id");
+            fflush(stdout);
+            return 1;
+        }
         Entity *entity = get_entity(space, id);
         if (entity == NULL) {
             printf("unknown entity");
@@ -147,6 +152,11 @@ int __handle_command__translate(int argc, char **argv) {
         broadcast_translate(space, id, x_offset, y_offset, z_offset);
         printf("translated entity");
     } else if (argv[1][0] == 'l') {
+        if (id < 0 || id >= MAX_LIGHTS) {
+            printf("invalid id");
+            fflush(stdout);
+            return 1;
+        }
         LightSource *light = get_light(space, id);
         if (light == NULL) {
             printf("unknown light");
