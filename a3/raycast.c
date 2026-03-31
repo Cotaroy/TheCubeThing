@@ -60,6 +60,8 @@ double get_luminosity(double *pos, double x_vector, double y_vector, double z_ve
 
 // helper for shoot ray, returns distance from triangle
 // return INFINITY if no intersection
+// learned the math behind this from 
+// https://www.cs.utexas.edu/~theshark/courses/cs354/lectures/cs354-4.pdf
 double get_distance(double *pos, double x_vector, double y_vector, double z_vector, Triangle *triangle, double *intersection, double *unit_n) {
 
   double ray_vec[3];
@@ -269,6 +271,7 @@ double shoot_light_ray(double *pos, double x_vector, double y_vector, double z_v
         }
 
         if (obstructed == 0) {
+            // used Gemini to learn how to handle the angle that the light hits
             double cos_angle = fmax(0, dot_product(min_unit_normal, to_light_normalized));
             total_intensity += source->intensity * cos_angle / distance_squared;
         }
