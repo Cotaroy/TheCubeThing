@@ -41,11 +41,16 @@ void broadcast_to_pipes(int *write_fds, void *source_buffer, size_t nbytes) {
 }
 
 void broadcast_translate(EntitySpace *space, int *write_fds, int entity_id, double x_offset, double y_offset, double z_offset) {
+    if (entity_id < 0 || entity_id >= MAX_ENTITIES) {
+        fprintf(stderr, "Provided invalid entity_id (%d), out of bounds.\n", entity_id);
+        return;
+    }
+
     Entity *entity = get_entity(space, entity_id);
 
     if (entity == NULL) {
         fprintf(stderr, "Provided invalid entity_id (%d), perhaps it was deleted?\n", entity_id);
-        exit(1);
+        return;
     }
 
     translate(entity, x_offset, y_offset, z_offset);
@@ -63,10 +68,14 @@ void broadcast_translate(EntitySpace *space, int *write_fds, int entity_id, doub
 
 void broadcast_rotate(EntitySpace *space, int *write_fds, int entity_id, uint8_t axis_of_rotation, double angle, double x_center, double y_center, double z_center) {
 
+    if (entity_id < 0 || entity_id >= MAX_ENTITIES) {
+        fprintf(stderr, "Provided invalid entity_id (%d), out of bounds.\n", entity_id);
+        return;
+    }
     Entity *entity = get_entity(space, entity_id);
     if (entity == NULL) {
         fprintf(stderr, "Provided invalid entity_id (%d), perhaps it was deleted?\n", entity_id);
-        exit(1);
+        return;
     }
 
     CameraMessageHeader header = {0};
@@ -93,10 +102,15 @@ void broadcast_rotate(EntitySpace *space, int *write_fds, int entity_id, uint8_t
 }
 
 void broadcast_translate_light(EntitySpace *space, int *write_fds, int entity_id, double x_offset, double y_offset, double z_offset) {
+    if (entity_id < 0 || entity_id >= MAX_LIGHTS) {
+        fprintf(stderr, "Provided invalid entity_id (%d), out of bounds.\n", entity_id);
+        return;
+    }
     LightSource *entity = get_light(space, entity_id);
 
     if (entity == NULL) {
         fprintf(stderr, "Provided invalid entity_id (%d), perhaps it was deleted?\n", entity_id);
+        return;
     }
 
     CameraMessageHeader header = {0};
@@ -113,11 +127,15 @@ void broadcast_translate_light(EntitySpace *space, int *write_fds, int entity_id
 }
 
 void broadcast_rotate_light(EntitySpace *space, int *write_fds, int entity_id, uint8_t axis_of_rotation, double angle, double x_center, double y_center, double z_center) {
+    if (entity_id < 0 || entity_id >= MAX_LIGHTS) {
+        fprintf(stderr, "Provided invalid entity_id (%d), out of bounds.\n", entity_id);
+        return;
+    }
     LightSource *entity = get_light(space, entity_id);
 
     if (entity == NULL) {
         fprintf(stderr, "Provided invalid entity_id (%d), perhaps it was deleted?\n", entity_id);
-        exit(1);
+        return;
     }
 
     CameraMessageHeader header = {0};
@@ -144,11 +162,15 @@ void broadcast_rotate_light(EntitySpace *space, int *write_fds, int entity_id, u
 }
 
 void broadcast_brighten_light(EntitySpace *space, int *write_fds, int entity_id, double delta_intensity) {
+    if (entity_id < 0 || entity_id >= MAX_LIGHTS) {
+        fprintf(stderr, "Provided invalid entity_id (%d), out of bounds.\n", entity_id);
+        return;
+    }
     LightSource *source = get_light(space, entity_id);
 
     if (source == NULL) {
         fprintf(stderr, "Provided invalid entity_id (%d), perhaps it was deleted?\n", entity_id);
-        exit(1);
+        return;
     }
 
     CameraMessageHeader header = {0};
@@ -163,6 +185,10 @@ void broadcast_brighten_light(EntitySpace *space, int *write_fds, int entity_id,
 }
 
 Entity *broadcast_create_entity(EntitySpace *space, int *write_fds, int entity_id, double x_corner, double y_corner, double z_corner, double x_length, double y_length, double z_length) {
+    if (entity_id < 0 || entity_id >= MAX_ENTITIES) {
+        fprintf(stderr, "Provided invalid entity_id (%d), out of bounds.\n", entity_id);
+        return NULL;
+    }
     CameraMessageHeader header = {0};
     CameraWorkerSpaceUpdate_NewEntity new_details = {0};
     header.message_type = MSGTYPE_SPACE_UPDATE_NEW_ENTITY;
@@ -179,6 +205,10 @@ Entity *broadcast_create_entity(EntitySpace *space, int *write_fds, int entity_i
 }
 
 LightSource *broadcast_create_light_source(EntitySpace *space, int *write_fds, int entity_id, double x, double y, double z, double intensity) {
+    if (entity_id < 0 || entity_id >= MAX_LIGHTS) {
+        fprintf(stderr, "Provided invalid entity_id (%d), out of bounds.\n", entity_id);
+        return NULL;
+    }
     CameraMessageHeader header = {0};
     CameraWorkerSpaceUpdate_NewLightSource new_details = {0};
     header.message_type = MSGTYPE_SPACE_UPDATE_NEW_LIGHTSOURCE;
@@ -195,6 +225,10 @@ LightSource *broadcast_create_light_source(EntitySpace *space, int *write_fds, i
 }
 
 void broadcast_delete_entity(EntitySpace *space, int *write_fds, int entity_id) {
+    if (entity_id < 0 || entity_id >= MAX_ENTITIES) {
+        fprintf(stderr, "Provided invalid entity_id (%d), out of bounds.\n", entity_id);
+        return;
+    }
     CameraMessageHeader header = {0};
     CameraWorkerSpaceUpdate_DeleteEntity delete_details = {0};
     header.message_type = MSGTYPE_SPACE_UPDATE_DELETE_ENTITY;
@@ -206,6 +240,10 @@ void broadcast_delete_entity(EntitySpace *space, int *write_fds, int entity_id) 
 }
 
 void broadcast_delete_light_source(EntitySpace *space, int *write_fds, int entity_id) {
+    if (entity_id < 0 || entity_id >= MAX_ENTITIES) {
+        fprintf(stderr, "Provided invalid entity_id (%d), out of bounds.\n", entity_id);
+        return;
+    }
     CameraMessageHeader header = {0};
     CameraWorkerSpaceUpdate_DeleteLightSource delete_details = {0};
     header.message_type = MSGTYPE_SPACE_UPDATE_DELETE_LIGHTSOURCE;
