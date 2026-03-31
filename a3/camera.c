@@ -153,7 +153,7 @@ void camera_worker_work(
             result.image_x = task.image_x;
             result.image_y = task.image_y;
             result.distance = distance;
-            if (write(fd_write, &result, sizeof(result)) <= 0) {
+            if (write_safely(fd_write, &result, sizeof(result)) <= 0) {
                 perror("child write");
                 exit(1);
             }
@@ -521,13 +521,13 @@ void capture_image(
     for (int i = 0; i < num_workers; i++) {
         // write the header that indicates an incoming task
         if (write_safely(worker_write_fds[i], task_header, sizeof(*task_header)) < 0) {
-            perror("write");
+            perror("write - broadcast");
             exit(1);
         }
         // write the actual task itself to the pipe
         if (write_safely(worker_write_fds[i], task_list[task_list_head],
                          sizeof(*task_list[task_list_head])) < 0) {
-            perror("write");
+            perror("write - raycast task");
             exit(1);
         }
         // printf("sent task to worker at index %d\n", i);

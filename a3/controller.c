@@ -5,6 +5,7 @@
 #include "manager.h"
 #include "math.h"
 #include "controller.h"
+#include "parser.h"
 #define PI (3.14159265358979323846)
 
 struct termios og_settings;
@@ -119,11 +120,7 @@ void handle_non_canonical_input(double *camera_x, double *camera_y, double *came
             case ':':
                 enter_line_command_mode();
                 printf("Entered user command mode. <command_name> <parameter0> <parameter1> <...>\n");
-                int a;
-                if (scanf("%d", &a) == -1) {
-                    perror("scanf");
-                    exit(1);
-                }
+                parse_single_command();
                 exit_line_command_mode();
                 break;
         }

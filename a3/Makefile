@@ -25,8 +25,8 @@ renderer.o: renderer.c renderer.h
 	gcc ${FLAGS} -c $<
 
 
-manager: manager.c camera.c raycast.c space.c renderer.c controller.c camera.h raycast.h space.h renderer.h manager.h controller.h
-	gcc ${FLAGS} -o manager manager.c camera.c raycast.c space.c renderer.c controller.c -lm
+manager: manager.c camera.c raycast.c space.c renderer.c controller.c parser.c camera.h raycast.h space.h renderer.h manager.h controller.h parser.h
+	gcc ${FLAGS} -o manager manager.c camera.c raycast.c space.c renderer.c controller.c parser.c -lm
 
 tags: *.c *.h
 	ctags **.c **.h
