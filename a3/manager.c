@@ -292,12 +292,9 @@ int main() {
     terminal_enter_alt_screen();
 
     Entity *cube1 = broadcast_create_entity(space, 0, -.5, -.5, -.5, 1, 1, 1);
-    broadcast_create_light_source(space, 0, 0, 0, 2, 1000);
+    broadcast_create_light_source(space, 2, 0, 0, 2, 1000);
     broadcast_create_light_source(space, 1, 0, 0, -2, 1000);
-    broadcast_create_light_source(space, 2, 2, 0, 0, 1000);
-    broadcast_create_light_source(space, 3, -2, 0, 0, 1000);
-    broadcast_create_light_source(space, 4, 0, 2, 0, 1000);
-    broadcast_create_light_source(space, 5, 0, -2, 0, 1000);
+    broadcast_create_light_source(space, 0, 2, 0, 0, 1000);
 
     // render some stuff
     while (1) {
@@ -315,18 +312,10 @@ int main() {
         handle_non_canonical_input(&camera_x, &camera_y, &camera_z, &camera_azimuth, &camera_inclination);
         printf("(%f, %f, %f, %f, %f)\n", camera_x, camera_y, camera_z, camera_azimuth, camera_inclination);
 
-
-        // broadcast_translate(space, write_fds, 2, 0, -3./60, 0);
-
-        // broadcast_brighten_light(space, write_fds, 0, -(source->intensity * .1));
-
-        // broadcast_rotate(space, write_fds, 2, MSGDETAIL_ROTATE_ENTITY_AXIS_X, PI/32, cube2->x_center, cube2->y_center, cube2->z_center);
-        // broadcast_rotate(space, write_fds, 2, MSGDETAIL_ROTATE_ENTITY_AXIS_Y, PI/32, cube2->x_center, cube2->y_center, cube2->z_center);
-        // broadcast_rotate(space, write_fds, 2, MSGDETAIL_ROTATE_ENTITY_AXIS_Z, PI/32, cube2->x_center, cube2->y_center, cube2->z_center);
-        
-        // broadcast_rotate_light(space, write_fds, 0, MSGDETAIL_ROTATE_LIGHTSOURCE_AXIS_X, PI/32, 0, 0, 0);
-        // broadcast_rotate_light(space, write_fds, 0, MSGDETAIL_ROTATE_LIGHTSOURCE_AXIS_Y, PI/32, cube1->x_center, cube1->y_center, cube1->z_center);
-        // broadcast_rotate_light(space, write_fds, 0, MSGDETAIL_ROTATE_LIGHTSOURCE_AXIS_Z, PI/32, 0, 0, 0);
+        if (get_entity(space, 0) != NULL && get_light(space, 0) != NULL) {
+            broadcast_rotate_light(space, 0, MSGDETAIL_ROTATE_LIGHTSOURCE_AXIS_Y, PI/32, cube1->x_center, cube1->y_center, cube1->z_center);
+            broadcast_rotate_light(space, 0, MSGDETAIL_ROTATE_LIGHTSOURCE_AXIS_Z, PI/32, cube1->x_center, cube1->y_center, cube1->z_center);
+        }
     
         if(get_entity(space, 0) != NULL) {
             broadcast_rotate(space, 0, MSGDETAIL_ROTATE_ENTITY_AXIS_X, -PI/64, cube1->x_center, cube1->y_center, cube1->z_center);
