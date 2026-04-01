@@ -32,6 +32,7 @@
 // the state of the scene
 static EntitySpace *space;
 static int write_fds[NUM_WORKERS];
+static DistanceMap map = {0};
 
 /**
  * get a pointer to the space that is being rendered right now
@@ -42,6 +43,8 @@ EntitySpace *get_space() { return space; }
  * get write_fds
  */ 
 int *get_write_fds() { return write_fds; }
+
+DistanceMap get_map() { return map; }
 
 void broadcast_to_pipes(void *source_buffer, size_t nbytes) {
     for (int i = 0; i < NUM_WORKERS; i++) {
@@ -303,10 +306,9 @@ int main() {
     spawn_camera_workers(pids, read_fds, write_fds, NUM_WORKERS, space);
 
     // create the film to capture the image on
-    DistanceMap *map = malloc(sizeof(DistanceMap));
-    map->width = terminal_width;
-    map->height = terminal_height;
-    map->distances = malloc(sizeof(double) * FILM_MAX_WIDTH * FILM_MAX_HEIGHT);
+    map.width = terminal_width;
+    map.height = terminal_height;
+    map.distances = malloc(sizeof(double) * FILM_MAX_WIDTH * FILM_MAX_HEIGHT);
 
     terminal_enter_alt_screen();
 
@@ -325,8 +327,8 @@ int main() {
         */
 
         // make sure the film is always in sync with the user's window size
-        map->width = terminal_width;
-        map->height = terminal_height;
+        map.width = terminal_width;
+        map.height = terminal_height;
 
         handle_non_canonical_input(&camera_x, &camera_y, &camera_z, &camera_azimuth, &camera_inclination);
         printf("(%f, %f, %f, %f, %f)\n", camera_x, camera_y, camera_z, camera_azimuth, camera_inclination);
@@ -343,14 +345,14 @@ int main() {
         }
 
         capture_image(
-            map,
+            &map,
             HORIZONTAL_VIEW_ANGLE, // horizontal view angle
             PIXEL_ASPECT_RATIO,
             camera_x, camera_y, camera_z, // camera position
             camera_azimuth, camera_inclination,      // camera rotation
             read_fds, write_fds, NUM_WORKERS);
         terminal_move_cursor_to_topleft();
-        render_luminosity(map);
+        render_luminosity(&map);
     }
 
     terminal_exit_alt_screen();
@@ -371,8 +373,7 @@ int main() {
     }
 
     restore_original_settings();
-    free(map->distances);
-    free(map);
+    free(map.distances);
     free_space(space);
 
     return 0;

@@ -1,3 +1,4 @@
+#include "renderer.h"
 #include "camera.h"
 #include "controller.h"
 #include "manager.h"
@@ -17,12 +18,11 @@ int __handle_command__exit(int argc, char **argv) {
     (void)argv;
 
     printf("byebye\n");
-    EntitySpace *space = get_space();
-    restore_original_settings();
 
+    EntitySpace *space = get_space();
+    DistanceMap map = get_map();
     int *write_fds = get_write_fds();
 
-    terminal_exit_alt_screen();
     // close the pipes and dispose of the children
     for (int i = 0; i < NUM_WORKERS; i++) {
         if (close(write_fds[i]) == -1) {
@@ -38,6 +38,9 @@ int __handle_command__exit(int argc, char **argv) {
         }
     }
 
+    terminal_exit_alt_screen();
+    restore_original_settings();
+    free(map.distances);
     free_space(space);
     exit(0);
 }
