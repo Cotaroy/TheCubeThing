@@ -340,6 +340,7 @@ void camera_worker_work(
 
         }
     }
+    cleanup_child(fd_read, fd_write, space);
     exit(0);
 }
 
