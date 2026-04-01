@@ -17,3 +17,7 @@ report/*.aux
 report/*.log
 report/*.synctex.gz
 report/aux
+
+# valgrind scripts
+valgrind-thing.sh
+valgrind-log.txt
