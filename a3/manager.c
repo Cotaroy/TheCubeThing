@@ -332,11 +332,6 @@ int main() {
 
     terminal_enter_alt_screen();
 
-    Entity *cube1 = broadcast_create_entity(space, 0, -.5, -.5, -.5, 1, 1, 1);
-    broadcast_create_light_source(space, 2, 0, 0, 2, 1000);
-    broadcast_create_light_source(space, 1, 0, 0, -2, 1000);
-    broadcast_create_light_source(space, 0, 2, 0, 0, 1000);
-
     // render some stuff
     while (1) {
         /*
@@ -354,14 +349,16 @@ int main() {
         printf("(%f, %f, %f, %f, %f)\n", camera_x, camera_y, camera_z, camera_azimuth, camera_inclination);
 
         if (get_entity(space, 0) != NULL && get_light(space, 0) != NULL) {
-            broadcast_rotate_light(space, 0, MSGDETAIL_ROTATE_LIGHTSOURCE_AXIS_Y, PI/32, cube1->x_center, cube1->y_center, cube1->z_center);
-            broadcast_rotate_light(space, 0, MSGDETAIL_ROTATE_LIGHTSOURCE_AXIS_Z, PI/32, cube1->x_center, cube1->y_center, cube1->z_center);
+            Entity *cube = get_entity(space, 0);
+            broadcast_rotate_light(space, 0, MSGDETAIL_ROTATE_LIGHTSOURCE_AXIS_Y, PI/32, cube->x_center, cube->y_center, cube->z_center);
+            broadcast_rotate_light(space, 0, MSGDETAIL_ROTATE_LIGHTSOURCE_AXIS_Z, PI/32, cube->x_center, cube->y_center, cube->z_center);
         }
     
         if(get_entity(space, 0) != NULL) {
-            broadcast_rotate(space, 0, MSGDETAIL_ROTATE_ENTITY_AXIS_X, -PI/64, cube1->x_center, cube1->y_center, cube1->z_center);
-            broadcast_rotate(space, 0, MSGDETAIL_ROTATE_ENTITY_AXIS_Y, -PI/64, cube1->x_center, cube1->y_center, cube1->z_center);
-            broadcast_rotate(space, 0, MSGDETAIL_ROTATE_ENTITY_AXIS_Z, -PI/64, cube1->x_center, cube1->y_center, cube1->z_center);
+            Entity *cube = get_entity(space, 0);
+            broadcast_rotate(space, 0, MSGDETAIL_ROTATE_ENTITY_AXIS_X, -PI/64, cube->x_center, cube->y_center, cube->z_center);
+            broadcast_rotate(space, 0, MSGDETAIL_ROTATE_ENTITY_AXIS_Y, -PI/64, cube->x_center, cube->y_center, cube->z_center);
+            broadcast_rotate(space, 0, MSGDETAIL_ROTATE_ENTITY_AXIS_Z, -PI/64, cube->x_center, cube->y_center, cube->z_center);
         }
 
         capture_image(&map,
