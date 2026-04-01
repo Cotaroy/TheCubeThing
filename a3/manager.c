@@ -33,6 +33,8 @@
 static EntitySpace *space;
 static int write_fds[NUM_WORKERS];
 static DistanceMap map = {0};
+static pid_t pids[NUM_WORKERS];
+static int read_fds[NUM_WORKERS];
 
 /**
  * get a pointer to the space that is being rendered right now
@@ -48,10 +50,15 @@ DistanceMap get_map() { return map; }
 
 void broadcast_to_pipes(void *source_buffer, size_t nbytes) {
     for (int i = 0; i < NUM_WORKERS; i++) {
-
-        if (write_safely(write_fds[i], source_buffer, nbytes) <= 0) {
-            perror("write - broadcast");
-            exit(1);
+        int write_res;
+        if ((write_res = write_safely(write_fds[i], source_buffer, nbytes)) <= 0) {
+            if (write_res == SENTINEL_WRITE_SAFELY_BROKEN_PIPE) {
+                respawn_single_worker_at_index(pids, read_fds, write_fds, i);
+            }
+            else {
+                perror("write - broadcast");
+                exit(1);
+            }
         }
     }
 }
@@ -88,6 +95,15 @@ void broadcast_rotate(EntitySpace *space, int entity_id, uint8_t axis_of_rotatio
         fprintf(stderr, "Provided invalid entity_id (%d), perhaps it was deleted?\n", entity_id);
         return;
     }
+    if (axis_of_rotation == MSGDETAIL_ROTATE_ENTITY_AXIS_X) {
+        rotate_x(entity, angle, x_center, y_center, z_center);
+    }
+    else if (axis_of_rotation == MSGDETAIL_ROTATE_ENTITY_AXIS_Y) {
+        rotate_y(entity, angle, x_center, y_center, z_center);
+    }
+    else if (axis_of_rotation == MSGDETAIL_ROTATE_ENTITY_AXIS_Z) {
+        rotate_z(entity, angle, x_center, y_center, z_center);
+    }
 
     CameraMessageHeader header = {0};
     CameraWorkerSpaceUpdate_RotateEntity rotation_details = {0};
@@ -100,16 +116,6 @@ void broadcast_rotate(EntitySpace *space, int entity_id, uint8_t axis_of_rotatio
     rotation_details.z_center = z_center;
     broadcast_to_pipes(&header, sizeof(CameraMessageHeader));
     broadcast_to_pipes(&rotation_details, sizeof(CameraWorkerSpaceUpdate_RotateEntity));
-    
-    if (axis_of_rotation == MSGDETAIL_ROTATE_ENTITY_AXIS_X) {
-        rotate_x(entity, angle, x_center, y_center, z_center);
-    }
-    else if (axis_of_rotation == MSGDETAIL_ROTATE_ENTITY_AXIS_Y) {
-        rotate_y(entity, angle, x_center, y_center, z_center);
-    }
-    else if (axis_of_rotation == MSGDETAIL_ROTATE_ENTITY_AXIS_Z) {
-        rotate_z(entity, angle, x_center, y_center, z_center);
-    }
 }
 
 void broadcast_translate_light(EntitySpace *space, int entity_id, double x_offset, double y_offset, double z_offset) {
@@ -119,6 +125,7 @@ void broadcast_translate_light(EntitySpace *space, int entity_id, double x_offse
         fprintf(stderr, "Provided invalid entity_id (%d), perhaps it was deleted?\n", entity_id);
         return;
     }
+    translate_light(entity, x_offset, y_offset, z_offset);
 
     CameraMessageHeader header = {0};
     CameraWorkerSpaceUpdate_TranslateLightSource translation_details = {0};
@@ -130,7 +137,6 @@ void broadcast_translate_light(EntitySpace *space, int entity_id, double x_offse
     broadcast_to_pipes(&header, sizeof(CameraMessageHeader));
     broadcast_to_pipes(&translation_details, sizeof(CameraWorkerSpaceUpdate_TranslateLightSource));
 
-    translate_light(entity, x_offset, y_offset, z_offset);
 }
 
 void broadcast_rotate_light(EntitySpace *space, int entity_id, uint8_t axis_of_rotation, double angle, double x_center, double y_center, double z_center) {
@@ -139,6 +145,15 @@ void broadcast_rotate_light(EntitySpace *space, int entity_id, uint8_t axis_of_r
     if (entity == NULL) {
         fprintf(stderr, "Provided invalid entity_id (%d), perhaps it was deleted?\n", entity_id);
         return;
+    }
+    if (axis_of_rotation == MSGDETAIL_ROTATE_LIGHTSOURCE_AXIS_X) {
+        rotate_x_light(entity, angle, x_center, y_center, z_center);
+    }
+    else if (axis_of_rotation == MSGDETAIL_ROTATE_LIGHTSOURCE_AXIS_Y) {
+        rotate_y_light(entity, angle, x_center, y_center, z_center);
+    }
+    else if (axis_of_rotation == MSGDETAIL_ROTATE_LIGHTSOURCE_AXIS_Z) {
+        rotate_z_light(entity, angle, x_center, y_center, z_center);
     }
 
     CameraMessageHeader header = {0};
@@ -152,16 +167,6 @@ void broadcast_rotate_light(EntitySpace *space, int entity_id, uint8_t axis_of_r
     rotation_details.z_center = z_center;
     broadcast_to_pipes(&header, sizeof(CameraMessageHeader));
     broadcast_to_pipes(&rotation_details, sizeof(CameraWorkerSpaceUpdate_RotateLightSource));
-    
-    if (axis_of_rotation == MSGDETAIL_ROTATE_LIGHTSOURCE_AXIS_X) {
-        rotate_x_light(entity, angle, x_center, y_center, z_center);
-    }
-    else if (axis_of_rotation == MSGDETAIL_ROTATE_LIGHTSOURCE_AXIS_Y) {
-        rotate_y_light(entity, angle, x_center, y_center, z_center);
-    }
-    else if (axis_of_rotation == MSGDETAIL_ROTATE_LIGHTSOURCE_AXIS_Z) {
-        rotate_z_light(entity, angle, x_center, y_center, z_center);
-    }
 }
 
 void broadcast_brighten_light(EntitySpace *space, int entity_id, double delta_intensity) {
@@ -171,6 +176,7 @@ void broadcast_brighten_light(EntitySpace *space, int entity_id, double delta_in
         fprintf(stderr, "Provided invalid entity_id (%d), perhaps it was deleted?\n", entity_id);
         return;
     }
+    brighten(source, delta_intensity);
 
     CameraMessageHeader header = {0};
     CameraWorkerSpaceUpdate_BrightenLightSource brighten_details = {0};
@@ -180,10 +186,12 @@ void broadcast_brighten_light(EntitySpace *space, int entity_id, double delta_in
     broadcast_to_pipes(&header, sizeof(CameraMessageHeader));
     broadcast_to_pipes(&brighten_details, sizeof(CameraWorkerSpaceUpdate_BrightenLightSource));
 
-    brighten(source, delta_intensity);
 }
 
 Entity *broadcast_create_entity(EntitySpace *space, int entity_id, double x_corner, double y_corner, double z_corner, double x_length, double y_length, double z_length) {
+    Entity *entity = create_rectangle(x_corner, y_corner, z_corner, x_length, y_length, z_length);
+    add_to_entity_space(space, entity, entity_id);
+
     CameraMessageHeader header = {0};
     CameraWorkerSpaceUpdate_NewEntity new_details = {0};
     header.message_type = MSGTYPE_SPACE_UPDATE_NEW_ENTITY;
@@ -193,13 +201,13 @@ Entity *broadcast_create_entity(EntitySpace *space, int entity_id, double x_corn
     broadcast_to_pipes(&header, sizeof(CameraMessageHeader));
     broadcast_to_pipes(&new_details, sizeof(CameraWorkerSpaceUpdate_NewEntity));
 
-    Entity *entity = create_rectangle(x_corner, y_corner, z_corner, x_length, y_length, z_length);
-    add_to_entity_space(space, entity, entity_id);
-
     return entity;
 }
 
 LightSource *broadcast_create_light_source(EntitySpace *space, int entity_id, double x, double y, double z, double intensity) {
+    LightSource *source = create_light_source(x, y, z, intensity);
+    add_light_to_entity_space(space, source, entity_id);
+
     CameraMessageHeader header = {0};
     CameraWorkerSpaceUpdate_NewLightSource new_details = {0};
     header.message_type = MSGTYPE_SPACE_UPDATE_NEW_LIGHTSOURCE;
@@ -209,13 +217,13 @@ LightSource *broadcast_create_light_source(EntitySpace *space, int entity_id, do
     broadcast_to_pipes(&header, sizeof(CameraMessageHeader));
     broadcast_to_pipes(&new_details, sizeof(CameraWorkerSpaceUpdate_NewLightSource));
 
-    LightSource *source = create_light_source(x, y, z, intensity);
-    add_light_to_entity_space(space, source, entity_id);
 
     return source;
 }
 
 void broadcast_delete_entity(EntitySpace *space, int entity_id) {
+    delete_from_entity_space(space, entity_id);
+
     CameraMessageHeader header = {0};
     CameraWorkerSpaceUpdate_DeleteEntity delete_details = {0};
     header.message_type = MSGTYPE_SPACE_UPDATE_DELETE_ENTITY;
@@ -223,10 +231,11 @@ void broadcast_delete_entity(EntitySpace *space, int entity_id) {
     broadcast_to_pipes(&header, sizeof(CameraMessageHeader));
     broadcast_to_pipes(&delete_details, sizeof(CameraWorkerSpaceUpdate_DeleteEntity));
 
-    delete_from_entity_space(space, entity_id);
 }
 
 void broadcast_delete_light_source(EntitySpace *space, int entity_id) {
+    delete_light_from_entity_space(space, entity_id);
+
     CameraMessageHeader header = {0};
     CameraWorkerSpaceUpdate_DeleteLightSource delete_details = {0};
     header.message_type = MSGTYPE_SPACE_UPDATE_DELETE_LIGHTSOURCE;
@@ -234,7 +243,6 @@ void broadcast_delete_light_source(EntitySpace *space, int entity_id) {
     broadcast_to_pipes(&header, sizeof(CameraMessageHeader));
     broadcast_to_pipes(&delete_details, sizeof(CameraWorkerSpaceUpdate_DeleteLightSource));
 
-    delete_light_from_entity_space(space, entity_id);
 }
 
 int terminal_width = 32;
@@ -315,10 +323,6 @@ int main() {
     // build the scene
     space = create_space();
 
-    // spawn the workers
-    pid_t pids[NUM_WORKERS];
-    int read_fds[NUM_WORKERS];
-    // int write_fds[NUM_WORKERS];
     spawn_camera_workers(pids, read_fds, write_fds, NUM_WORKERS, space);
 
     // create the film to capture the image on

@@ -121,6 +121,12 @@ void capture_image(
     int *worker_write_fds,
     int num_workers);
 
+void respawn_single_worker_at_index(
+    pid_t *worker_pids,
+    int *worker_read_fds,
+    int *worker_write_fds,
+    int index);
+
 void spawn_camera_workers(
     pid_t *worker_pids,
     int *pipe_read_fds,
