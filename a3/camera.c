@@ -1,4 +1,5 @@
 #include <errno.h>
+#include <signal.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <sys/select.h>
@@ -83,6 +84,10 @@ ssize_t write_safely(int destination_file_descriptor,
                 // interrupted by a signal
                 // see `man 2 write` and `man 7 signal`
                 continue; // keep trying to write more bytes
+            }
+            if(errno == EPIPE) {
+                fprintf(stderr, "borken pipe\n");
+                return SENTINEL_WRITE_SAFELY_BROKEN_PIPE;
             }
             return -1; // give up
         }
@@ -190,6 +195,8 @@ void camera_worker_work(
                 exit(1);
             }
             Entity *entity = get_entity(space, details.entity_id);
+
+            exit(1);
 
             switch (details.axis_of_rotation) {
                 case MSGDETAIL_ROTATE_ENTITY_AXIS_X:
@@ -552,7 +559,8 @@ void capture_image(
             perror("write - raycast task");
             exit(1);
         }
-        // printf("sent task to worker at index %d\n", i);
+        sleep(1);
+        printf("sent task to worker at index %d\n", i);
         task_list_head++;
         tasks_assigned++;
     }
@@ -582,8 +590,11 @@ void capture_image(
             if(FD_ISSET(worker_read_fds[i], &select_read_fds) != 0) {
                 // THIS PIPE HAS SOMETHING FOR US TO READ
 
-                if(read_safely(worker_read_fds[i], &task_result,
-                            sizeof(CameraRaycastTaskResult)) < 0) {
+                int read_result =
+                    read_safely(worker_read_fds[i],
+                                &task_result,
+                                sizeof(CameraRaycastTaskResult)) < 0;
+                if (read_result < 0) {
                     perror("read");
                     exit(1);
                 }

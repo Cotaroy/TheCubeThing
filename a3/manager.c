@@ -293,11 +293,11 @@ int main() {
     // set up signal handlers
     // https://en.wikipedia.org/wiki/Signal_(IPC)
     if (signal(SIGTERM, cleanup_and_exit) == SIG_ERR ||
-        signal(SIGINT, cleanup_and_exit) == SIG_ERR ||
-        signal(SIGHUP, cleanup_and_exit) == SIG_ERR ||
-        signal(SIGTSTP, cleanup_and_exit) == SIG_ERR ||
-        signal(SIGWINCH, update_window_size) == SIG_ERR
-    ) {
+            signal(SIGINT, cleanup_and_exit) == SIG_ERR ||
+            signal(SIGHUP, cleanup_and_exit) == SIG_ERR ||
+            signal(SIGTSTP, cleanup_and_exit) == SIG_ERR ||
+            signal(SIGWINCH, update_window_size) == SIG_ERR ||
+            signal(SIGPIPE, SIG_IGN) == SIG_ERR) {
         perror("signal");
         exit(1);
     }

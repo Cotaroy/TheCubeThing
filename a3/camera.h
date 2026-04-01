@@ -27,6 +27,8 @@
 #define MSGDETAIL_ROTATE_LIGHTSOURCE_AXIS_Y 0x01
 #define MSGDETAIL_ROTATE_LIGHTSOURCE_AXIS_Z 0x02
 
+#define SENTINEL_WRITE_SAFELY_BROKEN_PIPE -99
+
 typedef struct {
     uint8_t message_type;
 } CameraMessageHeader;
