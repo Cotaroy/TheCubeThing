@@ -491,6 +491,10 @@ CommandHandler __command_handlers[NUM_AVAILABLE_COMMAND_HANDLERS] = {
         .handle_command = __handle_command__exit,
     },
     (CommandHandler){
+        .command_name = "q",
+        .handle_command = __handle_command__exit,
+    },
+    (CommandHandler){
         .command_name = "list",
         .handle_command = __handle_command__list,
     },
