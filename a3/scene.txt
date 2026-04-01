@@ -1,5 +1,5 @@
 :create l 0 2 0 0 1000
 :create l 1 0 0 -2 1000
 :create l 2 0 0 2 1000
-:create e -.5 -.5 -.5 1 1 1
+:create e 0 -.5 -.5 -.5 1 1 1
 

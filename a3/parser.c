@@ -1,6 +1,7 @@
 #include "parser.h"
 #include "manager.h"
 #include <stdio.h>
+#include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -26,9 +27,13 @@ int parse_single_command() {
     // causing the command handler to not get fired.
     // this loop just tries again if an empty line is somehow read
     while(1) {
-        if (fgets(command, MAX_COMMAND_LENGTH, stdin) == NULL) {
-            perror("fgets");
-            exit(1);
+        for (int i = 0; i < MAX_COMMAND_LENGTH; i++) {
+            int read_res = read(STDIN_FILENO, command + i, 1);
+            if (read_res == -1) {
+                perror("read command");
+                exit(1);
+            }
+            if (command[i] == '\n') break;
         }
 
         // separate out the arguments of the command, delimited by spaces
