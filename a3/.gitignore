@@ -9,7 +9,7 @@ test_space
 test_raycast
 test_renderer
 test_camera
-manager
+TheCubeThing
 
 # latex debris
 report/*.pdf
