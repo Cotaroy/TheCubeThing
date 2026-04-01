@@ -356,6 +356,10 @@ void spawn_camera_workers(
         }
         if(worker_pids[i] == 0) {
             // child
+            signal(SIGINT, SIG_IGN);
+            signal(SIGTERM, SIG_IGN);
+            signal(SIGHUP, SIG_IGN);
+            signal(SIGTSTP, SIG_IGN);
 
             close(parent_to_child_pipe[1]);
             close(child_to_parent_pipe[0]);
