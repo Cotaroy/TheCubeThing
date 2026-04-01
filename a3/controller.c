@@ -2,6 +2,7 @@
 #include <termios.h>
 #include <unistd.h>
 #include <stdlib.h>
+#include <fcntl.h>
 #include "ansi_escape_sequences.h"
 #include "manager.h"
 #include "math.h"
@@ -16,7 +17,12 @@ void restore_original_settings() {
 }
 
 void setup_non_canonical() {
-    tcgetattr(STDIN_FILENO, &og_settings);
+    int tty_fileno = open("/dev/tty", O_RDONLY);
+    if (tty_fileno < 0) {
+        perror("open - failed to get file descriptor for user's terminal");
+        exit(1);
+    }
+    tcgetattr(tty_fileno, &og_settings);
 
     struct termios new_settings = og_settings;
 
@@ -55,12 +61,26 @@ void exit_line_command_mode() {
 
 void handle_non_canonical_input(double *camera_x, double *camera_y, double *camera_z, double *camera_forward_azimuth, double *camera_forward_inclination) {
     char input_char = 'x';
-    int read_res;
-    while ((read_res = read(STDIN_FILENO, &input_char, 1)) > 0) {
+    while (1) {
+        int read_res = read(STDIN_FILENO, &input_char, 1);
+
+        // If we've reached EOF while STDIN is not the user's terminal
+        // (which presumably means the user redirected stdin from a file),
+        // restore control to the user's terminal.
+        if (read_res == 0) {
+            if (isatty(STDIN_FILENO)) {
+                return;
+            } else {
+                set_stdin_back_to_user_terminal();
+                continue;
+            }
+        }
+        
         if (read_res == -1) {
             perror("failed to read user movement input");
             exit(1);
         }
+
         exit_line_command_mode();
         switch (input_char) {
             case 'w':

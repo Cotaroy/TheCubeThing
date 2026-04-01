@@ -18,4 +18,6 @@ LightSource *broadcast_create_light_source(EntitySpace *space, int entity_id, do
 void broadcast_delete_entity(EntitySpace *space, int entity_id);
 void broadcast_delete_light_source(EntitySpace *space, int entity_id);
 
+void set_stdin_back_to_user_terminal();
+
 #endif

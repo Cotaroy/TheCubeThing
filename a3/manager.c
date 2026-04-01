@@ -1,16 +1,19 @@
-#include <math.h>
-#include <signal.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <sys/ioctl.h>
-#include <sys/wait.h>
-#include <unistd.h>
+#include "manager.h"
 #include "camera.h"
-#include "space.h"
+#include "controller.h"
 #include "raycast.h"
 #include "renderer.h"
-#include "manager.h"
-#include "controller.h"
+#include "space.h"
+#include <fcntl.h>
+#include <math.h>
+#include <signal.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <sys/ioctl.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <unistd.h>
 
 #define PI (3.14159265358979323846)
 
@@ -250,6 +253,17 @@ void update_window_size(int) {
     terminal_height = fmin(FILM_MAX_HEIGHT, w.ws_row);
 }
 
+void set_stdin_back_to_user_terminal() { 
+    int tty = open("/dev/tty", O_RDONLY);
+    if(tty < 0) {
+        perror("open - failed to change stdin back to user's terminal");
+        exit(1);
+    }
+    dup2(tty, STDIN_FILENO);
+    close(tty);
+    // setup_non_canonical();
+}
+
 int main() {
     // set up signal handlers
     // https://en.wikipedia.org/wiki/Signal_(IPC)
@@ -265,6 +279,7 @@ int main() {
 
     // update window size once on startup to give it the correct values
     update_window_size(SIGWINCH);
+    
 
     // setup handling camera movement through user input
     setup_non_canonical();
