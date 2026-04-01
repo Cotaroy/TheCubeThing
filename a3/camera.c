@@ -489,7 +489,7 @@ void capture_image(
 
 
     int num_tasks = film->width * film->height;
-    CameraRaycastTask *task_list[num_tasks];
+    CameraRaycastTask task_list[num_tasks];
     int task_list_head = 0;
     int task_list_tail = 0;
 
@@ -513,30 +513,26 @@ void capture_image(
         double theta_x = -(ax / 2); // radians from Forward towards Rightward
         for(int rx = 0; rx < film->width; rx++, theta_x += dx) {
             // start from the leftmost column, move right
-            CameraRaycastTask *task = malloc(sizeof(CameraRaycastTask));
-            if(task == NULL) {
-                perror("malloc");
-                exit(1);
-            }
+            CameraRaycastTask task;
 
             double rightward_coefficient = tan(theta_x);
             double upward_coefficient= tan(theta_y);
             // printf("%f, %f\n", theta_x, theta_y);
 
-            task->image_x = rx;
-            task->image_y = ry;
-            task->ray_origin_x = camera_x;
-            task->ray_origin_y = camera_y;
-            task->ray_origin_z = camera_z;
-            task->ray_direction_x =
+            task.image_x = rx;
+            task.image_y = ry;
+            task.ray_origin_x = camera_x;
+            task.ray_origin_y = camera_y;
+            task.ray_origin_z = camera_z;
+            task.ray_direction_x =
                 camera_forward[0] +
                 camera_rightward[0] * rightward_coefficient +
                 camera_upward[0] * upward_coefficient;
-            task->ray_direction_y =
+            task.ray_direction_y =
                 camera_forward[1] +
                 camera_rightward[1] * rightward_coefficient +
                 camera_upward[1] * upward_coefficient;
-            task->ray_direction_z =
+            task.ray_direction_z =
                 camera_forward[2] +
                 camera_rightward[2] * rightward_coefficient +
                 camera_upward[2] * upward_coefficient;
@@ -568,15 +564,15 @@ void capture_image(
     max_write_fd = -1;
 
     // we can send the same header with each task.
-    CameraMessageHeader *task_header = malloc(sizeof(CameraMessageHeader));
-    task_header->message_type = MSGTYPE_RAYCAST_TASK;
+    CameraMessageHeader task_header;
+    task_header.message_type = MSGTYPE_RAYCAST_TASK;
 
     // send out an initial batch of tasks -- one each
     for (int i = 0; i < num_workers; i++) {
        
         // write the header that indicates an incoming task
         int write_result = write_safely(
-            worker_write_fds[i], task_header, sizeof(*task_header));
+            worker_write_fds[i], &task_header, sizeof(task_header));
         if (write_result < 0) {
             if(write_result == SENTINEL_WRITE_SAFELY_BROKEN_PIPE) {
                 respawn_single_worker_at_index(
@@ -589,8 +585,8 @@ void capture_image(
        
         // write the actual task itself to the pipe
         write_result = write_safely(worker_write_fds[i],
-                                    task_list[task_list_head],
-                                    sizeof(*task_list[task_list_head]));
+                                    &task_list[task_list_head],
+                                    sizeof(task_list[task_list_head]));
         if (write_result < 0) {
             if (write_result == SENTINEL_WRITE_SAFELY_BROKEN_PIPE) {
                 respawn_single_worker_at_index(
@@ -658,7 +654,7 @@ void capture_image(
                     int write_result;
                     // write a header to indicate that a task is incoming
                     write_result = write_safely(
-                        worker_write_fds[i], task_header, sizeof(*task_header));
+                        worker_write_fds[i], &task_header, sizeof(task_header));
                     if (write_result < 0) {
                         if (write_result == SENTINEL_WRITE_SAFELY_BROKEN_PIPE) {
                             respawn_single_worker_at_index(worker_pids,
@@ -666,8 +662,8 @@ void capture_image(
                                                            worker_write_fds,
                                                            i);
                             write_result = write_safely(worker_write_fds[i],
-                                                        task_header,
-                                                        sizeof(*task_header));
+                                                        &task_header,
+                                                        sizeof(task_header));
                             if (write_result < 0) {
                                 perror("write - newly spawned worker already defective");
                                 exit(1);
@@ -681,8 +677,8 @@ void capture_image(
                     // write the task itself
                     write_result =
                         write_safely(worker_write_fds[i],
-                                     task_list[task_list_head],
-                                     sizeof(*task_list[task_list_head]));
+                                     &task_list[task_list_head],
+                                     sizeof(task_list[task_list_head]));
                     if (write_result < 0) {
                         if (write_result == SENTINEL_WRITE_SAFELY_BROKEN_PIPE) {
                             respawn_single_worker_at_index(worker_pids,
@@ -690,8 +686,8 @@ void capture_image(
                                                            worker_write_fds,
                                                            i);
                             write_result = write_safely(worker_write_fds[i],
-                                                        task_header,
-                                                        sizeof(*task_header));
+                                                        &task_header,
+                                                        sizeof(task_header));
                             if (write_result < 0) {
                                 perror("write - newly spawned worker already defective");
                                 exit(1);
@@ -710,17 +706,10 @@ void capture_image(
         }
     }
 
-    free(task_header);
-
     // end time
     gettimeofday(&stop, NULL);
     // printf("took %lu microseconds. exiting with %d tasks completed\n",
     //         (stop.tv_sec - start.tv_sec) * 1000000 + stop.tv_usec - start.tv_usec,
     //         tasks_completed);
-
-    for(int i = 0; i < num_tasks; i++) {
-        free(task_list[i]);
-        task_list[i] = NULL;
-    }
 }
 
