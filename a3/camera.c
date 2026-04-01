@@ -401,12 +401,25 @@ void spawn_camera_workers(pid_t *worker_pids,
     }
 }
 
-static void respawn_single_worker_at_index(pid_t *worker_pids,
-                                           int *worker_read_fds,
-                                           int *worker_write_fds,
-                                           int index) {
-    fprintf(
-        stderr, "Child at index %d is unresponsive. Respawning.\n", index);
+/**
+ * Given an index,
+ * - kill the worker at that index in worker_pids,
+ * - close both pipes between the parent & worker
+ * 
+ * and then
+ * - spawn a new worker
+ * - put the new worker's pid & pipe fds into the arrays at that same index
+ */
+void respawn_single_worker_at_index(pid_t *worker_pids,
+                                    int *worker_read_fds,
+                                    int *worker_write_fds,
+                                    int index) {
+    // Kill the worker and reap it so it doesn't stay zombified for too long
+    kill(worker_pids[index], SIGKILL);
+    waitpid(worker_pids[index], NULL, 0);
+
+    // spawn a new child
+    fprintf(stderr, "Child at index %d is unresponsive. Respawning.\n", index);
     close(worker_read_fds[index]);
     close(worker_write_fds[index]);
     spawn_single_camera_worker(
