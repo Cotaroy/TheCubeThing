@@ -212,8 +212,6 @@ void camera_worker_work(
             }
             Entity *entity = get_entity(space, details.entity_id);
 
-
-
             switch (details.axis_of_rotation) {
                 case MSGDETAIL_ROTATE_ENTITY_AXIS_X:
                     rotate_x(entity, details.angle, details.x_center, details.y_center, details.z_center);    
@@ -342,7 +340,6 @@ void camera_worker_work(
 
         }
     }
-    cleanup_child(fd_read, fd_write, space);
     exit(0);
 }
 
@@ -402,6 +399,18 @@ void spawn_camera_workers(pid_t *worker_pids,
         spawn_single_camera_worker(
             worker_pids, pipe_read_fds, pipe_write_fds, i, space);
     }
+}
+
+static void respawn_single_worker_at_index(pid_t *worker_pids,
+                                           int *worker_read_fds,
+                                           int *worker_write_fds,
+                                           int index) {
+    fprintf(
+        stderr, "Child at index %d is unresponsive. Respawning.\n", index);
+    close(worker_read_fds[index]);
+    close(worker_write_fds[index]);
+    spawn_single_camera_worker(
+        worker_pids, worker_read_fds, worker_write_fds, index, get_space());
 }
 
 /**
@@ -557,16 +566,8 @@ void capture_image(
             worker_write_fds[i], task_header, sizeof(*task_header));
         if (write_result < 0) {
             if(write_result == SENTINEL_WRITE_SAFELY_BROKEN_PIPE) {
-                fprintf(stderr,
-                        "Child at index %d is unresponsive. Respawning.\n",
-                        i);
-                close(worker_read_fds[i]);
-                close(worker_write_fds[i]);
-                spawn_single_camera_worker(worker_pids,
-                                           worker_read_fds,
-                                           worker_write_fds,
-                                           i,
-                                           get_space());
+                respawn_single_worker_at_index(
+                    worker_pids, worker_read_fds, worker_write_fds, i);
             } else {
                 perror("write - broadcast");
                 exit(1);
@@ -579,24 +580,16 @@ void capture_image(
                                     sizeof(*task_list[task_list_head]));
         if (write_result < 0) {
             if (write_result == SENTINEL_WRITE_SAFELY_BROKEN_PIPE) {
-                fprintf(stderr,
-                        "Child at index %d is unresponsive. Respawning.",
-                        i);
-                close(worker_write_fds[i]);
-                close(worker_read_fds[i]);
-                spawn_single_camera_worker(worker_pids,
-                                           worker_read_fds,
-                                           worker_write_fds,
-                                           i,
-                                           get_space());
+                respawn_single_worker_at_index(
+                    worker_pids, worker_read_fds, worker_write_fds, i);
             } else {
                 perror("write - broadcast");
                 exit(1);
             }
         }
 
-        sleep(1);
-        printf("sent task to worker at index %d\n", i);
+        // sleep(1);
+        // printf("sent task to worker at index %d\n", i);
         task_list_head++;
         tasks_assigned++;
     }
@@ -649,18 +642,51 @@ void capture_image(
                         break;
                     }
 
+                    int write_result;
                     // write a header to indicate that a task is incoming
-                    if (write_safely(worker_write_fds[i], task_header,
-                                     sizeof(*task_header)) < 0) {
-                        perror("write");
-                        exit(1);
+                    write_result = write_safely(
+                        worker_write_fds[i], task_header, sizeof(*task_header));
+                    if (write_result < 0) {
+                        if (write_result == SENTINEL_WRITE_SAFELY_BROKEN_PIPE) {
+                            respawn_single_worker_at_index(worker_pids,
+                                                           worker_read_fds,
+                                                           worker_write_fds,
+                                                           i);
+                            write_result = write_safely(worker_write_fds[i],
+                                                        task_header,
+                                                        sizeof(*task_header));
+                            if (write_result < 0) {
+                                perror("write - newly spawned worker already defective");
+                                exit(1);
+                            }
+                        } else {
+                            perror("write");
+                            exit(1);
+                        }
                     }
+
                     // write the task itself
-                    if (write_safely(worker_write_fds[i], 
-                              task_list[task_list_head],
-                              sizeof(*task_list[task_list_head])) < 0) {
-                        perror("write");
-                        exit(1);
+                    write_result =
+                        write_safely(worker_write_fds[i],
+                                     task_list[task_list_head],
+                                     sizeof(*task_list[task_list_head]));
+                    if (write_result < 0) {
+                        if (write_result == SENTINEL_WRITE_SAFELY_BROKEN_PIPE) {
+                            respawn_single_worker_at_index(worker_pids,
+                                                           worker_read_fds,
+                                                           worker_write_fds,
+                                                           i);
+                            write_result = write_safely(worker_write_fds[i],
+                                                        task_header,
+                                                        sizeof(*task_header));
+                            if (write_result < 0) {
+                                perror("write - newly spawned worker already defective");
+                                exit(1);
+                            }
+                        } else {
+                            perror("write");
+                            exit(1);
+                        }
                     }
 
                     task_list_head++;
