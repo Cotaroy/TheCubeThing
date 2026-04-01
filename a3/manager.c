@@ -354,10 +354,9 @@ int main() {
                camera_azimuth / PI * 180,
                camera_inclination / PI * 180);
 
-        if (get_entity(space, 0) != NULL && get_light(space, 0) != NULL) {
-            Entity *cube = get_entity(space, 0);
-            broadcast_rotate_light(space, 0, MSGDETAIL_ROTATE_LIGHTSOURCE_AXIS_Y, PI/32, cube->x_center, cube->y_center, cube->z_center);
-            broadcast_rotate_light(space, 0, MSGDETAIL_ROTATE_LIGHTSOURCE_AXIS_Z, PI/32, cube->x_center, cube->y_center, cube->z_center);
+        if (get_light(space, 0) != NULL) {
+            broadcast_rotate_light(space, 0, MSGDETAIL_ROTATE_LIGHTSOURCE_AXIS_Y, PI/32, 0, 0, 0);
+            broadcast_rotate_light(space, 0, MSGDETAIL_ROTATE_LIGHTSOURCE_AXIS_Z, PI/32, 0, 0, 0);
         }
     
         if(get_entity(space, 0) != NULL) {
