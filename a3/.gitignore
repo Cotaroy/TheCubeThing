@@ -21,3 +21,4 @@ report/aux
 # valgrind scripts
 valgrind-thing.sh
 valgrind-log.txt
+valgrind_report.txt
