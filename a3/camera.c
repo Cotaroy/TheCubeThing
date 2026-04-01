@@ -97,6 +97,20 @@ ssize_t write_safely(int destination_file_descriptor,
     return nbytes_successful;
 }
 
+static void cleanup_child(int fd_read, int fd_write, EntitySpace *space) {
+    if (close(fd_read) == -1) {
+        perror("close");
+        free_space(space);
+        exit(1);
+    }
+    if (close(fd_write) == -1) {
+        perror("close");
+        free_space(space);
+        exit(1);
+    }
+    free_space(space);
+}
+
 
 void camera_worker_work(
         int worker_idx,
@@ -120,12 +134,12 @@ void camera_worker_work(
             read_safely(fd_read, &header, sizeof(CameraMessageHeader));
         if (read_result == -1) {
             perror("read");
-            free_space(space);
+            cleanup_child(fd_read, fd_write, space);
             exit(1);
         }
         if (read_result == 0) {
             // EOF, meaning the write end has been closed
-            free_space(space);
+            cleanup_child(fd_read, fd_write, space);
             exit(0);
         }
 
@@ -139,7 +153,7 @@ void camera_worker_work(
                 read_safely(fd_read, &task, sizeof(CameraRaycastTask));
             if (read_result == -1) {
                 perror("read");
-                free_space(space);
+                cleanup_child(fd_read, fd_write, space);
                 exit(1);
             }
 
@@ -163,7 +177,7 @@ void camera_worker_work(
             result.distance = distance;
             if (write_safely(fd_write, &result, sizeof(result)) <= 0) {
                 perror("child write");
-                free_space(space);
+                cleanup_child(fd_read, fd_write, space);
                 exit(1);
             }
             // printf("child wrote result for pixel (%d, %d)\n",
@@ -179,7 +193,7 @@ void camera_worker_work(
                             sizeof(CameraWorkerSpaceUpdate_TranslateEntity)) <=
                 0) {
                 perror("read details of TranslateEntity update");
-                free_space(space);
+                cleanup_child(fd_read, fd_write, space);
                 exit(1);
             }
             Entity *entity = get_entity(space, details.entity_id);
@@ -191,7 +205,7 @@ void camera_worker_work(
             CameraWorkerSpaceUpdate_RotateEntity details;
             if(read_safely(fd_read, &details, sizeof(CameraWorkerSpaceUpdate_RotateEntity)) <= 0) {
                 perror("read details of RotateEntity update");
-                free_space(space);
+                cleanup_child(fd_read, fd_write, space);
                 exit(1);
             }
             Entity *entity = get_entity(space, details.entity_id);
@@ -211,7 +225,7 @@ void camera_worker_work(
                 default:
                     fprintf(stderr, "Unknown rotation axis 0x%x.",
                             details.axis_of_rotation);
-                    free_space(space);
+                    cleanup_child(fd_read, fd_write, space);
                     exit(1);
             }
             break;
@@ -221,7 +235,7 @@ void camera_worker_work(
             CameraWorkerSpaceUpdate_TranslateLightSource details;
             if (read_safely(fd_read, &details, sizeof(CameraWorkerSpaceUpdate_TranslateLightSource)) <= 0) {
                 perror("read details of TranslateLightSource update");
-                free_space(space);
+                cleanup_child(fd_read, fd_write, space);
                 exit(1);
             }
             LightSource *source = get_light(space, details.entity_id);
@@ -233,7 +247,7 @@ void camera_worker_work(
             CameraWorkerSpaceUpdate_RotateLightSource details;
             if(read_safely(fd_read, &details, sizeof(CameraWorkerSpaceUpdate_RotateLightSource)) <= 0) {
                 perror("read details of RotateLightSource update");
-                free_space(space);
+                cleanup_child(fd_read, fd_write, space);
                 exit(1);
             }
             LightSource *entity = get_light(space, details.entity_id);
@@ -251,7 +265,7 @@ void camera_worker_work(
                 default:
                     fprintf(stderr, "Unknown rotation axis 0x%x.",
                             details.axis_of_rotation);
-                    free_space(space);
+                    cleanup_child(fd_read, fd_write, space);
                     exit(1);
             }
             break;
@@ -261,7 +275,7 @@ void camera_worker_work(
             CameraWorkerSpaceUpdate_BrightenLightSource details;
             if (read_safely(fd_read, &details, sizeof(CameraWorkerSpaceUpdate_BrightenLightSource)) <= 0) {
                 perror("read details of BrightenLightSource update");
-                free_space(space);
+                cleanup_child(fd_read, fd_write, space);
                 exit(1);
             }
             LightSource *source = get_light(space, details.entity_id);
@@ -273,7 +287,7 @@ void camera_worker_work(
             CameraWorkerSpaceUpdate_NewEntity details;
             if (read_safely(fd_read, &details, sizeof(CameraWorkerSpaceUpdate_NewEntity)) <= 0) {
                 perror("read details of NewEntity update");
-                free_space(space);
+                cleanup_child(fd_read, fd_write, space);
                 exit(1);
             }
             Entity *entity = create_rectangle(details.corner_coord[0], details.corner_coord[1], details.corner_coord[2], 
@@ -286,7 +300,7 @@ void camera_worker_work(
             CameraWorkerSpaceUpdate_NewLightSource details;
             if (read_safely(fd_read, &details, sizeof(CameraWorkerSpaceUpdate_NewLightSource)) <= 0) {
                 perror("read details of NewLightSource update");
-                free_space(space);
+                cleanup_child(fd_read, fd_write, space);
                 exit(1);
             }
             LightSource *entity = create_light_source(details.coord[0], details.coord[1], details.coord[2], 
@@ -299,7 +313,7 @@ void camera_worker_work(
             CameraWorkerSpaceUpdate_DeleteEntity details;
             if (read_safely(fd_read, &details, sizeof(CameraWorkerSpaceUpdate_DeleteEntity)) <= 0) {
                 perror("read details of DeleteEntity update");
-                free_space(space);
+                cleanup_child(fd_read, fd_write, space);
                 exit(1);
             }
             delete_from_entity_space(space, details.entity_id);
@@ -310,7 +324,7 @@ void camera_worker_work(
             CameraWorkerSpaceUpdate_DeleteLightSource details;
             if (read_safely(fd_read, &details, sizeof(CameraWorkerSpaceUpdate_DeleteLightSource)) <= 0) {
                 perror("read details of DeleteLightSource update");
-                free_space(space);
+                cleanup_child(fd_read, fd_write, space);
                 exit(1);
             }
             delete_light_from_entity_space(space, details.entity_id);
@@ -321,23 +335,11 @@ void camera_worker_work(
             fprintf(stderr,
                     "Unhandled message type '%d' received by worker at index %d.\n",
                     header.message_type, worker_idx);
-            free_space(space);
+            cleanup_child(fd_read, fd_write, space);
             exit(1);
 
         }
     }
-    if (close(fd_read) == -1) {
-        perror("close");
-        free_space(space);
-        exit(1);
-    }
-    if (close(fd_write) == -1) {
-        perror("close");
-        free_space(space);
-        exit(1);
-    }
-    // printf("Worker %d exiting after completing %d tasks.\n", worker_idx, tasks_completed);
-    free_space(space);
     exit(0);
 }
 
@@ -466,15 +468,6 @@ void capture_image(
     double dy = ay / film->height;
 
 
-    // printf("======================================\n");
-    // printf("Top left ray has θ=%lf, φ=%lf.\n", azim, incl);
-    // printf("pxAR=%lf, a_azim=%lf, a_incl=%lf, d_azim=%lf, d_incl=%lf.\n",
-    //         pixel_aspect_ratio,
-    //         a_azim, a_incl,
-    //         d_azim, d_incl);
-    // printf("======================================\n");
-
-
     // set the starting angles
     double theta_y = (ay / 2);  // radians from Forward towards Upward
 
@@ -510,11 +503,6 @@ void capture_image(
                 camera_forward[2] +
                 camera_rightward[2] * rightward_coefficient +
                 camera_upward[2] * upward_coefficient;
-
-            // printf("(%f, %f, %f)\n", camera_forward[0], camera_rightward[0], camera_upward[0]);
-            // printf("(%f, %f, %f)\n", camera_forward[1], camera_rightward[1], camera_upward[1]);
-            // printf("(%f, %f, %f)\n", camera_forward[2], camera_rightward[2], camera_upward[2]);
-            // printf("[%d]: Shooting in direction (%f, %f, %f)\n", task_list_tail, task->ray_direction_x, task->ray_direction_y, task->ray_direction_z);
 
             task_list[task_list_tail] = task;
 
@@ -603,8 +591,6 @@ void capture_image(
                     (film->width * task_result.image_y)
                     + task_result.image_x;
                 film->distances[film_idx] = task_result.distance;
-                // printf("(%d, %d) Distance: %lf\n", task_result->image_x, task_result->image_y, task_result->distance);
-                // printf("received result for pixel (%d, %d)\n", task_result->image_x, task_result->image_y);
                 tasks_completed++;
 
                 if(FD_ISSET(worker_write_fds[i], &select_write_fds) != 0) {
@@ -629,7 +615,6 @@ void capture_image(
                         exit(1);
                     }
 
-                    // printf("sent task to worker at index %d\n", i);
                     task_list_head++;
                     tasks_assigned++;
                 }
@@ -647,7 +632,6 @@ void capture_image(
     //         tasks_completed);
 
     for(int i = 0; i < num_tasks; i++) {
-        // printf("[] %d\n", i);
         free(task_list[i]);
         task_list[i] = NULL;
     }

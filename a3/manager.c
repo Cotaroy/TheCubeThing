@@ -49,8 +49,6 @@ DistanceMap get_map() { return map; }
 void broadcast_to_pipes(void *source_buffer, size_t nbytes) {
     for (int i = 0; i < NUM_WORKERS; i++) {
 
-        // printf("writing to [%d]\n", i);
-        
         if (write_safely(write_fds[i], source_buffer, nbytes) <= 0) {
             perror("write - broadcast");
             exit(1);
