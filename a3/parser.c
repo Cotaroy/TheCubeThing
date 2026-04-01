@@ -8,12 +8,12 @@
 #define MAX_COMMAND_LENGTH 256
 #define MAX_COMMAND_ARGUMENT_COUNT 9
 
-static void end_string_before_line_feed(char *str) {
-    char *line_feed_position = strchr(str, '\n');
-    if(line_feed_position != NULL) {
-        *line_feed_position = '\0';
-    }
-}
+// static void end_string_before_line_feed(char *str) {
+//     char *line_feed_position = strchr(str, '\n');
+//     if(line_feed_position != NULL) {
+//         *line_feed_position = '\0';
+//     }
+// }
 
 int parse_single_command() {
     char command[MAX_COMMAND_LENGTH];
@@ -42,7 +42,7 @@ int parse_single_command() {
         // separate out the arguments of the command, delimited by spaces
         char *argv[MAX_COMMAND_ARGUMENT_COUNT];
         argv[0] = strtok(command, " ");
-        end_string_before_line_feed(argv[0]);
+        // end_string_before_line_feed(argv[0]);
         int argc = 1;
 
         if(strlen(argv[0]) == 0) {
