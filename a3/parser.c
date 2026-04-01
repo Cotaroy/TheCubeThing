@@ -33,7 +33,10 @@ int parse_single_command() {
                 perror("read command");
                 exit(1);
             }
-            if (command[i] == '\n') break;
+            if (command[i] == '\n') {
+                command[i] = '\0';
+                break;
+            }
         }
 
         // separate out the arguments of the command, delimited by spaces
