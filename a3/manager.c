@@ -366,7 +366,7 @@ int main() {
         }
     }
 
-    restore_original_settings(&og_settings);
+    restore_original_settings();
     free(map->distances);
     free(map);
     free_space(space);

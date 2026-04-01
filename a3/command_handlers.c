@@ -18,6 +18,23 @@ int __handle_command__exit(int argc, char **argv) {
     printf("byebye\n");
     EntitySpace *space = get_space();
     restore_original_settings();
+
+    terminal_exit_alt_screen();
+    // close the pipes and dispose of the children
+    for (int i = 0; i < NUM_WORKERS; i++) {
+        if (close(write_fds[i]) == -1) {
+            perror("close");
+            exit(1);
+        }
+    }
+    for (int i = 0; i < NUM_WORKERS; i++) {
+        int status;
+        if (wait(&status) == -1) {
+            perror("wait");
+            exit(1);
+        }
+    }
+
     free_space(space);
     exit(0);
 }
