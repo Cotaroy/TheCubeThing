@@ -461,15 +461,6 @@ void capture_image(
     double dy = ay / film->height;
 
 
-    // printf("======================================\n");
-    // printf("Top left ray has θ=%lf, φ=%lf.\n", azim, incl);
-    // printf("pxAR=%lf, a_azim=%lf, a_incl=%lf, d_azim=%lf, d_incl=%lf.\n",
-    //         pixel_aspect_ratio,
-    //         a_azim, a_incl,
-    //         d_azim, d_incl);
-    // printf("======================================\n");
-
-
     // set the starting angles
     double theta_y = (ay / 2);  // radians from Forward towards Upward
 
@@ -505,11 +496,6 @@ void capture_image(
                 camera_forward[2] +
                 camera_rightward[2] * rightward_coefficient +
                 camera_upward[2] * upward_coefficient;
-
-            // printf("(%f, %f, %f)\n", camera_forward[0], camera_rightward[0], camera_upward[0]);
-            // printf("(%f, %f, %f)\n", camera_forward[1], camera_rightward[1], camera_upward[1]);
-            // printf("(%f, %f, %f)\n", camera_forward[2], camera_rightward[2], camera_upward[2]);
-            // printf("[%d]: Shooting in direction (%f, %f, %f)\n", task_list_tail, task->ray_direction_x, task->ray_direction_y, task->ray_direction_z);
 
             task_list[task_list_tail] = task;
 
@@ -594,8 +580,6 @@ void capture_image(
                     (film->width * task_result.image_y)
                     + task_result.image_x;
                 film->distances[film_idx] = task_result.distance;
-                // printf("(%d, %d) Distance: %lf\n", task_result->image_x, task_result->image_y, task_result->distance);
-                // printf("received result for pixel (%d, %d)\n", task_result->image_x, task_result->image_y);
                 tasks_completed++;
 
                 if(FD_ISSET(worker_write_fds[i], &select_write_fds) != 0) {
@@ -620,7 +604,6 @@ void capture_image(
                         exit(1);
                     }
 
-                    // printf("sent task to worker at index %d\n", i);
                     task_list_head++;
                     tasks_assigned++;
                 }
@@ -638,7 +621,6 @@ void capture_image(
     //         tasks_completed);
 
     for(int i = 0; i < num_tasks; i++) {
-        // printf("[] %d\n", i);
         free(task_list[i]);
         task_list[i] = NULL;
     }
