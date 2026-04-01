@@ -8,6 +8,7 @@
 #include <math.h>
 #include <sys/wait.h>
 #include "camera.h"
+#include "manager.h"
 #include "raycast.h"
 #include "renderer.h"
 #include "space.h"
@@ -39,7 +40,7 @@ static ssize_t read_safely(
         ssize_t nbytes_now = read(
             source_file_descriptor, 
             source_buffer + nbytes_successful, 
-            num_bytes_wanted);
+            num_bytes_wanted - nbytes_successful);
 
         if(nbytes_now == 0) {
             // end of file reached
@@ -70,10 +71,11 @@ ssize_t write_safely(int destination_file_descriptor,
                             void *source_buffer, size_t num_bytes_wanted) {
     size_t nbytes_successful = 0;
     while (nbytes_successful < num_bytes_wanted) {
-        ssize_t nbytes_now =
-            write(destination_file_descriptor,
-                  source_buffer + nbytes_successful,
-                  num_bytes_wanted);
+        errno = 0;
+        
+        ssize_t nbytes_now = write(destination_file_descriptor,
+                                   source_buffer + nbytes_successful,
+                                   num_bytes_wanted - nbytes_successful);
 
         // if (nbytes_now == 0) {
         //     // end of file reached
@@ -210,7 +212,7 @@ void camera_worker_work(
             }
             Entity *entity = get_entity(space, details.entity_id);
 
-            exit(1);
+
 
             switch (details.axis_of_rotation) {
                 case MSGDETAIL_ROTATE_ENTITY_AXIS_X:
@@ -344,51 +346,62 @@ void camera_worker_work(
 }
 
 
-void spawn_camera_workers(
-        pid_t *worker_pids,
-        int *pipe_read_fds,
-        int *pipe_write_fds,
-        int count,
-        EntitySpace *space) {
+void spawn_single_camera_worker(pid_t *worker_pids,
+                          int *pipe_read_fds,
+                          int *pipe_write_fds,
+                          int index,
+                          EntitySpace *space) {
 
     int parent_to_child_pipe[2];
     int child_to_parent_pipe[2];
 
-    for(int i = 0; i < count; i++) {
-        if(pipe(parent_to_child_pipe) < 0) { perror("pipe"); exit(1); }
-        if(pipe(child_to_parent_pipe) < 0) { perror("pipe"); exit(1); }
-
-        worker_pids[i] = fork();
-        if(worker_pids[i] == -1) {
-            perror("fork");
-            exit(1);
-        }
-        if(worker_pids[i] == 0) {
-            // child
-            signal(SIGINT, SIG_IGN);
-            signal(SIGTERM, SIG_IGN);
-            signal(SIGHUP, SIG_IGN);
-            signal(SIGTSTP, SIG_IGN);
-
-            close(parent_to_child_pipe[1]);
-            close(child_to_parent_pipe[0]);
-            camera_worker_work(i, parent_to_child_pipe[0],
-                               child_to_parent_pipe[1],
-                               space);
-            // Should exit from inside this function (never return)
-            // but just in case
-            fprintf(stderr, "child escaped work");
-            exit(1);
-        }
-
-        close(child_to_parent_pipe[1]);
-        close(parent_to_child_pipe[0]);
-        pipe_read_fds[i] = child_to_parent_pipe[0];
-        pipe_write_fds[i] = parent_to_child_pipe[1];
+    if (pipe(parent_to_child_pipe) < 0) {
+        perror("pipe - spawn child");
+        exit(1);
     }
+    if (pipe(child_to_parent_pipe) < 0) {
+        perror("pipe - spawn child");
+        exit(1);
+    }
+
+    worker_pids[index] = fork();
+    if (worker_pids[index] == -1) {
+        perror("fork");
+        exit(1);
+    }
+    if (worker_pids[index] == 0) {
+        // child
+        signal(SIGINT, SIG_IGN);
+        signal(SIGTERM, SIG_IGN);
+        signal(SIGHUP, SIG_IGN);
+        signal(SIGTSTP, SIG_IGN);
+
+        close(parent_to_child_pipe[1]);
+        close(child_to_parent_pipe[0]);
+        camera_worker_work(
+            index, parent_to_child_pipe[0], child_to_parent_pipe[1], space);
+        // Should exit from inside this function (never return)
+        // but just in case
+        fprintf(stderr, "child escaped work");
+        exit(1);
+    }
+
+    close(child_to_parent_pipe[1]);
+    close(parent_to_child_pipe[0]);
+    pipe_read_fds[index] = child_to_parent_pipe[0];
+    pipe_write_fds[index] = parent_to_child_pipe[1];
 }
 
-
+void spawn_camera_workers(pid_t *worker_pids,
+                          int *pipe_read_fds,
+                          int *pipe_write_fds,
+                          int count,
+                          EntitySpace *space) {
+    for (int i = 0; i < count; i++) {
+        spawn_single_camera_worker(
+            worker_pids, pipe_read_fds, pipe_write_fds, i, space);
+    }
+}
 
 /**
  * Given a list of `Entity`s, capture an image where each sample in the image
@@ -423,6 +436,7 @@ void capture_image(
         double camera_z,
         double camera_forward_azimuth,
         double camera_forward_inclination,
+        int *worker_pids,
         int *worker_read_fds,
         int *worker_write_fds,
         int num_workers) {
@@ -536,17 +550,50 @@ void capture_image(
 
     // send out an initial batch of tasks -- one each
     for (int i = 0; i < num_workers; i++) {
+       
         // write the header that indicates an incoming task
-        if (write_safely(worker_write_fds[i], task_header, sizeof(*task_header)) < 0) {
-            perror("write - broadcast");
-            exit(1);
+        int write_result = write_safely(
+            worker_write_fds[i], task_header, sizeof(*task_header));
+        if (write_result < 0) {
+            if(write_result == SENTINEL_WRITE_SAFELY_BROKEN_PIPE) {
+                fprintf(stderr,
+                        "Child at index %d is unresponsive. Respawning.\n",
+                        i);
+                close(worker_read_fds[i]);
+                close(worker_write_fds[i]);
+                spawn_single_camera_worker(worker_pids,
+                                           worker_read_fds,
+                                           worker_write_fds,
+                                           i,
+                                           get_space());
+            } else {
+                perror("write - broadcast");
+                exit(1);
+            }
         }
+       
         // write the actual task itself to the pipe
-        if (write_safely(worker_write_fds[i], task_list[task_list_head],
-                         sizeof(*task_list[task_list_head])) < 0) {
-            perror("write - raycast task");
-            exit(1);
+        write_result = write_safely(worker_write_fds[i],
+                                    task_list[task_list_head],
+                                    sizeof(*task_list[task_list_head]));
+        if (write_result < 0) {
+            if (write_result == SENTINEL_WRITE_SAFELY_BROKEN_PIPE) {
+                fprintf(stderr,
+                        "Child at index %d is unresponsive. Respawning.",
+                        i);
+                close(worker_write_fds[i]);
+                close(worker_read_fds[i]);
+                spawn_single_camera_worker(worker_pids,
+                                           worker_read_fds,
+                                           worker_write_fds,
+                                           i,
+                                           get_space());
+            } else {
+                perror("write - broadcast");
+                exit(1);
+            }
         }
+
         sleep(1);
         printf("sent task to worker at index %d\n", i);
         task_list_head++;

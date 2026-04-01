@@ -360,13 +360,18 @@ int main() {
             broadcast_rotate(space, 0, MSGDETAIL_ROTATE_ENTITY_AXIS_Z, -PI/64, cube1->x_center, cube1->y_center, cube1->z_center);
         }
 
-        capture_image(
-            &map,
-            HORIZONTAL_VIEW_ANGLE, // horizontal view angle
-            PIXEL_ASPECT_RATIO,
-            camera_x, camera_y, camera_z, // camera position
-            camera_azimuth, camera_inclination,      // camera rotation
-            read_fds, write_fds, NUM_WORKERS);
+        capture_image(&map,
+                      HORIZONTAL_VIEW_ANGLE, // horizontal view angle
+                      PIXEL_ASPECT_RATIO,
+                      camera_x,
+                      camera_y,
+                      camera_z,
+                      camera_azimuth,
+                      camera_inclination,
+                      pids,
+                      read_fds,
+                      write_fds,
+                      NUM_WORKERS);
         terminal_move_cursor_to_topleft();
         render_luminosity(&map);
     }

@@ -116,6 +116,7 @@ void capture_image(
     double camera_z,
     double camera_forward_azimuth,
     double camera_forward_inclination,
+    int *worker_pids,
     int *worker_read_fds,
     int *worker_write_fds,
     int num_workers);
