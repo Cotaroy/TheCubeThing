@@ -3,6 +3,7 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <fcntl.h>
+#include <string.h>
 #include "ansi_escape_sequences.h"
 #include "manager.h"
 #include "math.h"
@@ -38,6 +39,7 @@ void setup_non_canonical() {
 
 void enter_line_command_mode() {
     struct termios current_settings;
+    memset(&current_settings, 0, sizeof(struct termios));
     tcgetattr(STDIN_FILENO, &current_settings);
 
     // turn on canonical
@@ -49,6 +51,7 @@ void enter_line_command_mode() {
 
 void exit_line_command_mode() {
     struct termios current_settings;
+    memset(&current_settings, 0, sizeof(struct termios));
     tcgetattr(STDIN_FILENO, &current_settings);
 
     current_settings.c_lflag &= ~ICANON;

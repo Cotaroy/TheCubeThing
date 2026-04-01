@@ -17,6 +17,7 @@ int __handle_command__exit(int argc, char **argv) {
 
     printf("byebye\n");
     EntitySpace *space = get_space();
+    restore_original_settings();
     free_space(space);
     exit(0);
 }
