@@ -369,10 +369,15 @@ void spawn_single_camera_worker(pid_t *worker_pids,
     }
     if (worker_pids[index] == 0) {
         // child
-        signal(SIGINT, SIG_IGN);
-        signal(SIGTERM, SIG_IGN);
-        signal(SIGHUP, SIG_IGN);
-        signal(SIGTSTP, SIG_IGN);
+        if (signal(SIGINT, SIG_IGN) == SIG_ERR ||
+            signal(SIGTERM, SIG_IGN) == SIG_ERR ||
+            signal(SIGHUP, SIG_IGN) == SIG_ERR ||
+            signal(SIGTSTP, SIG_IGN) == SIG_ERR) {
+            
+            perror("signal");
+            exit(1);
+        }
+
 
         close(parent_to_child_pipe[1]);
         close(child_to_parent_pipe[0]);
