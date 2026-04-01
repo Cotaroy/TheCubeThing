@@ -32,4 +32,4 @@ tags: *.c *.h
 	ctags **.c **.h
 
 clean:
-	rm -f *.o test_space test_raycast test_renderer
+	rm -f *.o test_space test_raycast TheCubeThing
