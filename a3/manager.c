@@ -281,7 +281,8 @@ void update_window_size(int) {
         return;
     }
     terminal_width = fmin(FILM_MAX_WIDTH, w.ws_col);
-    terminal_height = fmin(FILM_MAX_HEIGHT, w.ws_row);
+    terminal_height = fmin(FILM_MAX_HEIGHT, w.ws_row - 1);  // one less than terminal height
+                                                            // because we have an extra line of terminal output
 }
 
 void set_stdin_back_to_user_terminal() { 
@@ -346,7 +347,12 @@ int main() {
         map.height = terminal_height;
 
         handle_non_canonical_input(&camera_x, &camera_y, &camera_z, &camera_azimuth, &camera_inclination);
-        printf("(%f, %f, %f, %f, %f)\n", camera_x, camera_y, camera_z, camera_azimuth, camera_inclination);
+        printf("position=(%.2f, %.2f, %.2f) / facing=(%.2f°, %.2f°)\n",
+               camera_x,
+               camera_y,
+               camera_z,
+               camera_azimuth / PI * 180,
+               camera_inclination / PI * 180);
 
         if (get_entity(space, 0) != NULL && get_light(space, 0) != NULL) {
             Entity *cube = get_entity(space, 0);
