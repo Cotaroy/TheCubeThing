@@ -17,7 +17,6 @@
 
 #define PI (3.14159265358979323846)
 
-#define NUM_WORKERS (8)
 #define HORIZONTAL_VIEW_ANGLE (PI / 4)
 #define PIXEL_ASPECT_RATIO (11.0 / 21.0)
 
@@ -38,6 +37,11 @@ static int write_fds[NUM_WORKERS];
  * get a pointer to the space that is being rendered right now
  */
 EntitySpace *get_space() { return space; }
+
+/**
+ * get write_fds
+ */ 
+int *get_write_fds() { return write_fds; }
 
 void broadcast_to_pipes(void *source_buffer, size_t nbytes) {
     for (int i = 0; i < NUM_WORKERS; i++) {

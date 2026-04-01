@@ -4,8 +4,11 @@
 #include <stdint.h>
 #include <stddef.h>
 #include "space.h"
+#define NUM_WORKERS (8)
+
 
 EntitySpace *get_space();
+int *get_write_fds();
 
 void broadcast_to_pipes(void *source_buffer, size_t nbytes);
 void broadcast_translate(EntitySpace *space, int entity_id, double x_offset, double y_offset, double z_offset);

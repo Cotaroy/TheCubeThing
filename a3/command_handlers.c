@@ -3,6 +3,7 @@
 #include "manager.h"
 #include "parser.h"
 #include "space.h"
+#include "sys/wait.h"
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -18,6 +19,8 @@ int __handle_command__exit(int argc, char **argv) {
     printf("byebye\n");
     EntitySpace *space = get_space();
     restore_original_settings();
+
+    int *write_fds = get_write_fds();
 
     terminal_exit_alt_screen();
     // close the pipes and dispose of the children
