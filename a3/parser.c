@@ -45,7 +45,7 @@ int parse_single_command() {
         // end_string_before_line_feed(argv[0]);
         int argc = 1;
 
-        if(strlen(argv[0]) == 0) {
+        if(argv[0] == NULL || strlen(argv[0]) == 0) {
             continue;
         }
 
