@@ -2,6 +2,8 @@
 
 **THE CUBE THING** is an interactive, right-angle-edged, last-gen spinning cube and rectangular prism raytraced ASCII-art renderer. It features simulated lighting effects and a multi-process architecture to distribute rendering tasks to child processes.
 
+[Video Demo](https://youtu.be/UxQB3jfsUAE)
+
 ---
 
 ## Project Overview
@@ -40,6 +42,9 @@ Press `:` to enter command mode. Type the command and press **Enter** to execute
 | `brighten <id> <delta_intensity>` | Increases brightness of light with ID `id` |
 | `create e <id> <x> <y> <z> <xl> <yl> <zl>` | Create a new cuboid with specified ID, position, and lengths |
 | `create l <id> <x> <y> <z> <intensity>` | Create a new light with ID `id` at provided coordinates |
+
+Entity 0 will always spin around its center.
+Light 0 will always spin around the origin.
 
 ---
 
