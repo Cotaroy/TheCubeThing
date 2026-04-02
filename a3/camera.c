@@ -15,6 +15,7 @@
 #define PI (3.14159265358979323846)
 
 
+
 static void normalise_vector_mutate(double *x, double *y, double *z) {
     double length = sqrt((*x)*(*x) + (*y)*(*y) + (*z)*(*z));
     *x /= length;
@@ -113,6 +114,23 @@ static void cleanup_child(int fd_read, int fd_write, EntitySpace *space) {
     free_space(space);
 }
 
+static int fd_read_for_sig_handler;
+static int fd_write_for_sig_handler;
+static EntitySpace *space_for_sig_handler;
+
+static void cleanup_child_sig() {
+    if (close(fd_read_for_sig_handler) == -1) {
+        perror("close");
+        free_space(space_for_sig_handler);
+        exit(1);
+    }
+    if (close(fd_write_for_sig_handler) == -1) {
+        perror("close");
+        free_space(space_for_sig_handler);
+        exit(1);
+    }
+    free_space(space_for_sig_handler);
+}
 
 void camera_worker_work(
         int worker_idx,
@@ -369,10 +387,15 @@ void spawn_single_camera_worker(pid_t *worker_pids,
     }
     if (worker_pids[index] == 0) {
         // child
-        if (signal(SIGINT, SIG_IGN) == SIG_ERR ||
-            signal(SIGTERM, SIG_IGN) == SIG_ERR ||
-            signal(SIGHUP, SIG_IGN) == SIG_ERR ||
-            signal(SIGTSTP, SIG_IGN) == SIG_ERR) {
+        
+        fd_read_for_sig_handler = parent_to_child_pipe[0];
+        fd_write_for_sig_handler = child_to_parent_pipe[1];
+        space_for_sig_handler = space;
+
+        if (signal(SIGINT, cleanup_child_sig) == SIG_ERR ||
+            signal(SIGTERM, cleanup_child_sig) == SIG_ERR ||
+            signal(SIGHUP, cleanup_child_sig) == SIG_ERR ||
+            signal(SIGTSTP, cleanup_child_sig) == SIG_ERR) {
             
             perror("signal");
             exit(1);
@@ -420,7 +443,7 @@ void respawn_single_worker_at_index(pid_t *worker_pids,
                                     int *worker_write_fds,
                                     int index) {
     // Kill the worker and reap it so it doesn't stay zombified for too long
-    kill(worker_pids[index], SIGKILL);
+    kill(worker_pids[index], SIGTERM);
     waitpid(worker_pids[index], NULL, 0);
 
     // spawn a new child
