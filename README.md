@@ -2,7 +2,8 @@
 
 **THE CUBE THING** is an interactive, right-angle-edged, last-gen spinning cube and rectangular prism raytraced ASCII-art renderer. It features simulated lighting effects and a multi-process architecture to distribute rendering tasks to child processes.
 
-[Video Demo](https://youtu.be/UxQB3jfsUAE)
+- [Video Demo 1](https://youtu.be/UxQB3jfsUAE)
+- [Video Demo 2](https://www.youtube.com/watch?v=-IppomLf0mg)
 
 ---
 
